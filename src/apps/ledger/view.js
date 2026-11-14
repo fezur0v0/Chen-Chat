@@ -77,7 +77,7 @@ function bars(data,ui) {
 function heat(data,ui,bounds) {
  if(ui.mode === 'week') {
   const cells = Array.from({length:7},(_,i) => { const day = addDays(bounds.start,i), exp = dayExpense(data.entries,day); return `<button type="button" class="ledger-heat lv-${heatLevel(exp)}" data-ledger-action="day" data-ymd="${ymd(day)}" aria-label="${day.getMonth() + 1}月${day.getDate()}日，支出 ${formatYuan(exp)}"><span>${day.getDate()}</span><small>${DOW[i]}</small></button>`; });
-  return `<section class="ledger-block"><h3>这 7 天</h3><div class="ledger-week-heat">${cells.join('')}</div>${legend()}</section>`;
+  return `<section class="ledger-block"><h3>这 7 天</h3><div class="ledger-week-heat">${cells.join('')}</div></section>`;
  }
  if(ui.mode === 'year') {
   const year = bounds.start.getFullYear(), gridStart = weekStart(new Date(year,0,1)), last = new Date(year,11,31);
@@ -87,13 +87,12 @@ function heat(data,ui,bounds) {
    const days = Array.from({length:7},(_,i) => { const day = addDays(cursor,i); if(day.getFullYear() !== year) return '<span class="ledger-dot is-pad"></span>'; if(day.getDate() === 1) label = (day.getMonth() + 1) + '月'; const exp = dayExpense(data.entries,day); return `<button type="button" class="ledger-dot lv-${heatLevel(exp)}" data-ledger-action="day" data-ymd="${ymd(day)}" aria-label="${day.getMonth() + 1}月${day.getDate()}日，支出 ${formatYuan(exp)}"></button>`; });
    labels.push(`<span>${label}</span>`); cols.push(`<div>${days.join('')}</div>`);
   }
-  return `<section class="ledger-block"><h3>全年热力图</h3><div class="ledger-year" tabindex="0" aria-label="全年按天支出，可左右滑动"><div class="ledger-year-dows">${DOW_CN.map(day => `<span>${day}</span>`).join('')}</div><div><div class="ledger-year-months">${labels.join('')}</div><div class="ledger-year-cols">${cols.join('')}</div></div></div><p class="ledger-note">左右滑动查看全年，点某一天回到账单。</p>${legend()}</section>`;
+  return `<section class="ledger-block"><h3>全年热力图</h3><div class="ledger-year" tabindex="0" aria-label="全年按天支出，可左右滑动"><div class="ledger-year-dows">${DOW_CN.map(day => `<span>${day}</span>`).join('')}</div><div><div class="ledger-year-months">${labels.join('')}</div><div class="ledger-year-cols">${cols.join('')}</div></div></div><p class="ledger-note">左右滑动查看全年，点某一天回到账单。</p></section>`;
  }
  const first = bounds.start, blanks = first.getDay(), count = daysInMonth(first.getFullYear(),first.getMonth());
  const cells = Array.from({length:blanks},() => '<span class="ledger-cal is-empty"></span>').concat(Array.from({length:count},(_,index) => { const day = new Date(first.getFullYear(),first.getMonth(),index + 1), exp = dayExpense(data.entries,day); return `<button type="button" class="ledger-cal lv-${heatLevel(exp)}" data-ledger-action="day" data-ymd="${ymd(day)}" aria-label="${index + 1}日，支出 ${formatYuan(exp)}">${index + 1}</button>`; }));
- return `<section class="ledger-block"><h3>日历热力图</h3><div class="ledger-cal-head">${DOW_CN.map(day => `<span>${day}</span>`).join('')}</div><div class="ledger-cal-grid">${cells.join('')}</div>${legend()}</section>`;
+ return `<section class="ledger-block"><h3>日历热力图</h3><div class="ledger-cal-head">${DOW_CN.map(day => `<span>${day}</span>`).join('')}</div><div class="ledger-cal-grid">${cells.join('')}</div></section>`;
 }
-function legend() { return `<p class="ledger-legend">少 ${[0,1,2,3,4,5].map(level => `<i class="lv-${level}"></i>`).join('')} 多 <span>按当天支出</span></p>`; }
 function donut(entries,mode) {
  const items = categoryBreakdown(entries), total = items.reduce((sum,item) => sum + item.cents,0);
  const empty = mode === 'week' ? '这周' : mode === 'year' ? '这一年' : '这个月';
