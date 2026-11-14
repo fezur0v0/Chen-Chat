@@ -14,7 +14,7 @@ export function createLedgerApp({app,notify,storage = localStorage}) {
  const dialog = document.createElement('dialog');
  dialog.className = 'ledger-dialog';
  document.body.append(dialog);
- let draft = null, closing = false, confirm = null;
+ let draft = null, closing = false, confirm = null, sheetRevision = 0;
  bindDrawerDismiss(sheet,{panel:() => sheet.open && !closing ? sheet : null,close:() => void closeSheet(),backdrop:true});
  sheet.addEventListener('cancel',event => { event.preventDefault(); void closeSheet(); });
  function paint() {
@@ -59,13 +59,26 @@ export function createLedgerApp({app,notify,storage = localStorage}) {
   catch { notify('本机空间不够，这笔账没有存下。'); return false; }
  }
  function openSheet(next) {
+  const revision = ++sheetRevision;
   draft = next;
   sheet.innerHTML = drawerHeader({title:next.mode === 'edit' ? '改一笔' : '记一笔',action:'close',actionAttribute:'data-ledger-action'}) + ledgerSheet(next);
-  if(!sheet.open) sheet.showModal();
-  sheet.querySelector('[name=amount]')?.focus({preventScroll:true});
+  if(!sheet.open) {
+   sheet.style.transform = '';
+   sheet.showModal();
+  }
+  // Let the sheet settle before the keyboard resizes the viewport. A newer
+  // draft, dismissal or an intentional field focus cancels this autofocus.
+  const animations = sheet.getAnimations().filter(animation => animation.effect?.target === sheet);
+  Promise.allSettled(animations.map(animation => animation.finished)).then(() => {
+   if(!sheet.open || revision !== sheetRevision || draft !== next) return;
+   const active = document.activeElement;
+   if(sheet.contains(active) && active !== sheet && !active.matches('.drawer-handle')) return;
+   sheet.querySelector('[name=amount]')?.focus({preventScroll:true});
+  });
  }
  function closeSheet() {
   if(!sheet.open || closing) return;
+  sheetRevision++;
   closing = true;
   try { sheet.close(); } catch { /* already closed */ }
   closing = false;
@@ -219,14 +232,25 @@ export function createLedgerApp({app,notify,storage = localStorage}) {
  sheet.addEventListener('change',event => { if(event.target.matches('[data-ledger-photos]')) { const files = [...event.target.files]; event.target.value = ''; void addPhotos(files); } });
  sheet.addEventListener('input',event => { if(event.target.name === 'amount') event.target.value = cleanAmount(event.target.value); });
  dialog.addEventListener('input',event => { if(event.target.name === 'balance') event.target.value = cleanAmount(event.target.value); });
- const swipe = {x:0,y:0,locked:''};
- app.addEventListener('touchstart',event => { const zone = event.target.closest('[data-ledger-swipe]'); if(!zone) return; swipe.x = event.touches[0].clientX; swipe.y = event.touches[0].clientY; swipe.locked = ''; },{passive:true});
+ const swipe = {x:0,y:0,id:null};
+ app.addEventListener('touchstart',event => {
+  swipe.id = null;
+  const zone = event.target.closest('[data-ledger-swipe]');
+  // The year heatmap owns horizontal scrolling. Do not also change the
+  // outer period and replace its DOM when the same finger is released.
+  if(!zone || event.target.closest('.ledger-year') || event.touches.length !== 1) return;
+  const touch = event.touches[0];
+  swipe.x = touch.clientX;swipe.y = touch.clientY;swipe.id = touch.identifier;
+ },{passive:true});
  app.addEventListener('touchend',event => {
-  if(!event.target.closest?.('[data-ledger-swipe]')) return;
-  const dx = event.changedTouches[0].clientX - swipe.x, dy = event.changedTouches[0].clientY - swipe.y;
+  const touch = [...event.changedTouches].find(touch => touch.identifier === swipe.id);
+  swipe.id = null;
+  if(!touch || !event.target.closest?.('[data-ledger-swipe]')) return;
+  const dx = touch.clientX - swipe.x, dy = touch.clientY - swipe.y;
   if(Math.abs(dx) < 56 || Math.abs(dx) < Math.abs(dy)) return;
   shift(dx < 0 ? 1 : -1);
  },{passive:true});
+ app.addEventListener('touchcancel',() => { swipe.id = null; },{passive:true});
  function shift(dir) {
   if(ui.mode === 'week') ui.anchor = new Date(ui.anchor.getFullYear(),ui.anchor.getMonth(),ui.anchor.getDate() + dir * 7);
   else if(ui.mode === 'year') ui.anchor = new Date(ui.anchor.getFullYear() + dir,6,1);
