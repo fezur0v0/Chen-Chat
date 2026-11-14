@@ -5,6 +5,7 @@
 @import './presets/style.css';
 @import './worldbook/style.css';
 @import './archives/style.css';
+@import './ledger/style.css';
 @import './appearance/style.css';
 
 .home-app{min-width:0;--app-line:var(--ink)}

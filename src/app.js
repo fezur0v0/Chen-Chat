@@ -14,6 +14,7 @@ import {createStickerLibrary} from './expressions/controller.js';
 import { drawerHeader, animateDrawerClose, bindDrawerDismiss } from './drawer.js';
 import { createMusicApp } from './apps/music/controller.js';
 import { createDiaryApp } from './apps/diary/controller.js';
+import { createLedgerApp } from './apps/ledger/controller.js';
 import { acceptedHomeMood, diaryMoods } from './apps/diary/model.js';
 import { createPromptLibraries } from './apps/prompt-library/controller.js';
 import { createHomeEditor } from './home-editor.js';
@@ -42,6 +43,7 @@ const dialog=document.createElement('dialog');dialog.id='memory-dialog';dialog.c
 const homeEditor=createHomeEditor({app,getState:()=>state,setState:value=>{state=value;},persist,renderHome,notify,compressImage,openApp:goto});
 const galleryApp=createGalleryApp({app,getState:()=>state,setState:value=>{state=value;},persist,notify,compressImage});
 const diaryApp=createDiaryApp({app,getState:()=>state,setState:value=>{state=value;},persist,notify});
+const ledgerApp=createLedgerApp({app,notify});
 const musicApp=createMusicApp({app,getState:()=>state,setState:value=>{state=value;},persist,notify,compressImage});
 const promptLibraries=createPromptLibraries({app,getState:()=>state,setState:value=>{state=value;},persist,notify});
 const stickerLibrary=createStickerLibrary({app,getState:()=>state,setState:value=>{state=value;},getUI:()=>chatUI,persist,notify,compressImage});
@@ -72,7 +74,7 @@ function render(){
  if(sidebarDialog.open){const scroll=sidebarDialog.querySelector('.sidebar-conversations')?.scrollTop||0;sidebarDialog.innerHTML=sidebar(state,page);sidebarDialog.querySelector('.sidebar-conversations').scrollTop=scroll;}
  for(const id of opened){const d=document.getElementById(id);if(d)d.open=true;}
  const messages=document.querySelector('#messages');if(messages)messages.scrollTop=messages.scrollHeight;
- const input=app.querySelector('[name=message]');if(input){input.value=composeDraft;input.setSelectionRange(selection.start,selection.end);resizeComposer();}isolatedPreview?.decorate?.({app,state,ui:chatUI,render});updateViewport();syncTray();chatMedia.sync();
+ const input=app.querySelector('[name=message]');if(input){input.value=composeDraft;input.setSelectionRange(selection.start,selection.end);resizeComposer();}isolatedPreview?.decorate?.({app,state,ui:chatUI,render});updateViewport();syncTray();chatMedia.sync();ledgerApp.sync();
 }
 // Keep the wallpaper, dock and scroll container mounted during desktop updates.
 function renderHome(){
