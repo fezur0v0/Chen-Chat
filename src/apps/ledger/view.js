@@ -44,9 +44,9 @@ function billView(data,ui) {
  <div class="ledger-weeks" tabindex="0" aria-label="按周浏览，左右滑动切换">${weeks.map(start => `<div class="ledger-week" data-week="${ymd(start)}">${Array.from({length:7},(_,i) => {
   const day = addDays(start,i), chosen = sameDay(day,selected), spent = data.entries.some(item => ymd(new Date(item.ts)) === ymd(day));
   const flow = data.entries.filter(item => ymd(new Date(item.ts)) === ymd(day)).reduce((sum,item) => sum + (item.type === 'income' ? item.amountCents : -item.amountCents),0);
-  return `<button type="button" class="ledger-day${chosen ? ' is-selected' : ''}" data-ledger-action="day" data-ymd="${ymd(day)}" aria-pressed="${chosen}"><span class="ledger-dow">${DOW[i]}</span><span class="ledger-dom">${day.getDate()}</span><span class="ledger-dnet">${spent ? formatCompact(flow) : '·'}</span></button>`;
+  return `<button type="button" class="ledger-day${chosen ? ' is-selected' : ''}" data-ledger-action="day" data-ymd="${ymd(day)}" aria-pressed="${chosen}"><span class="ledger-dow">${DOW[i]}</span><span class="ledger-dom">${day.getDate()}</span><span class="ledger-dnet">${spent ? formatCompact(flow) : ''}</span></button>`;
  }).join('')}</div>`).join('')}</div>
- <div class="ledger-day-head"><h2>${sameDay(selected,today) ? 'TODAY · ' : ''}${selected.getMonth() + 1}月${selected.getDate()}日</h2><span>${net < 0 ? '净支出 ' + formatYuan(-net) : net > 0 ? '净收入 ' + formatYuan(net) : '收支持平'}</span></div>
+ <div class="ledger-day-head"><h2>${sameDay(selected,today) ? 'TODAY · ' : ''}${selected.getMonth() + 1}月${selected.getDate()}日</h2><span ${net === 0 ? 'class="ledger-balance-face" aria-label="收支持平"' : ''}>${net < 0 ? '净支出 ' + formatYuan(-net) : net > 0 ? '净收入 ' + formatYuan(net) : '¯꒳¯'}</span></div>
  <div class="ledger-list">${dayItems.length ? dayItems.map(entryRow).join('') : '<div class="ledger-empty"><strong>这一天还没有记账</strong>点中间的加号，记一笔吧</div>'}</div>
  <nav class="ledger-tabbar" aria-label="记账导航"><button type="button" class="ledger-tab is-active" data-ledger-action="screen" data-screen="bill" aria-current="page">${ledgerIcon('list',20)}账单</button><div class="ledger-fab-slot"><button type="button" class="ledger-fab" data-ledger-action="add" aria-label="记一笔">${ledgerIcon('plus',26)}</button></div><button type="button" class="ledger-tab" data-ledger-action="screen" data-screen="stats">${ledgerIcon('chart',20)}统计</button></nav>`;
 }
@@ -59,14 +59,10 @@ function entryRow(item) {
 function statsView(data,ui) {
  const bounds = rangeOf(ui.mode,ui.anchor), list = entriesBetween(data.entries,bounds.start,bounds.end), flow = sumEntries(list);
  const titles = {week:'本周支出',month:'本月支出',year:'本年支出'};
- return `<div class="ledger-stats-head"><h2 class="ledger-screen-title">统计</h2><button type="button" class="ledger-range" data-ledger-action="pick" aria-haspopup="dialog"><span>${bounds.label}</span>${ledgerIcon('chevron',16)}</button></div>
- <div class="ledger-seg" role="tablist" aria-label="统计范围">${['week','月','year'].map((mode,index) => {
-  const id = ['week','month','year'][index], label = ['周','月','年'][index];
-  return `<button type="button" data-ledger-action="mode" data-mode="${id}" aria-pressed="${ui.mode === id}">${label}</button>`;
- }).join('')}</div>
+ return `<div class="ledger-stats-head"><div class="ledger-seg" role="group" aria-label="统计范围">${['week','month','year'].map((mode,index) => `<button type="button" data-ledger-action="mode" data-mode="${mode}" aria-pressed="${ui.mode === mode}">${['周','月','年'][index]}</button>`).join('')}</div><button type="button" class="ledger-filter" data-ledger-action="pick" aria-haspopup="dialog" aria-label="筛选统计时间：${bounds.label}" title="${bounds.label}">${ledgerIcon('filter',20)}</button></div>
  <div class="ledger-stats" data-ledger-swipe><section class="ledger-summary"><div><h3>${titles[ui.mode]}</h3><strong>${formatYuan(flow.expense)}</strong></div><p>收入 ${formatYuan(flow.income)} · 结余 ${formatYuan(flow.net,{plus:true})}</p></section>
  ${ui.mode === 'month' ? bars(data,ui) : ''}${heat(data,ui,bounds)}${donut(list,ui.mode)}${lineChart(data,ui,bounds)}${catTable(list)}
- </div><button type="button" class="ledger-quiet" data-ledger-action="screen" data-screen="bill">回到账单</button>
+ </div>
  <nav class="ledger-tabbar" aria-label="记账导航"><button type="button" class="ledger-tab" data-ledger-action="screen" data-screen="bill">${ledgerIcon('list',20)}账单</button><div class="ledger-fab-slot"><button type="button" class="ledger-fab" data-ledger-action="add" aria-label="记一笔">${ledgerIcon('plus',26)}</button></div><button type="button" class="ledger-tab is-active" data-ledger-action="screen" data-screen="stats" aria-current="page">${ledgerIcon('chart',20)}统计</button></nav>`;
 }
 function bars(data,ui) {

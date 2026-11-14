@@ -17,9 +17,10 @@
 .ledger-dow{font-size:12px;color:var(--muted)}
 .ledger-dom{width:32px;height:32px;display:grid;place-items:center;border-radius:50%;font-weight:650;font-variant-numeric:tabular-nums}
 .ledger-day.is-selected .ledger-dom{background:var(--ink);color:var(--solid)}
-.ledger-dnet{max-width:100%;overflow:hidden;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;text-overflow:ellipsis;white-space:nowrap}
+.ledger-dnet{min-height:1.2em;max-width:100%;overflow:hidden;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;text-overflow:ellipsis;white-space:nowrap}
 .ledger-day-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:18px 4px 8px}
 .ledger-day-head h2{font-size:14px;font-weight:650;color:var(--muted)}
+.ledger-balance-face{font-size:18px;letter-spacing:.04em;white-space:nowrap}
 .ledger-day-head span,.ledger-amt{font-variant-numeric:tabular-nums;font-weight:650}
 .ledger-list{display:flex;flex-direction:column;gap:4px}
 .ledger-entry{display:flex;align-items:center;gap:12px;width:100%;min-height:48px;padding:8px 4px;text-align:left;border-radius:12px}
@@ -35,10 +36,13 @@
 .ledger-tab{display:flex;flex:1;align-items:center;justify-content:center;gap:6px;min-width:48px;height:48px;color:var(--muted);font-weight:550}
 .ledger-tab.is-active{color:var(--ink);font-weight:750}
 .ledger-fab-slot{position:relative;flex:0 0 64px;height:56px}
+/* Retain the centering translation while the shared press style scales. */
+.ledger-fab:active:not(:disabled){transform:translate(-50%,-58%) scale(.96)}
 .ledger-fab{position:absolute;left:50%;top:50%;display:grid;width:56px;height:56px;place-items:center;transform:translate(-50%,-58%);border-radius:50%;background:var(--ink);color:var(--solid);box-shadow:0 8px 20px rgb(0 0 0 / .28)}
-.ledger-stats-head{display:flex;align-items:center;gap:12px;margin:4px 0 12px}
-.ledger-screen-title{margin:0;font-size:28px;font-weight:750;letter-spacing:-.03em}
-.ledger-range{display:inline-flex;align-items:center;gap:4px;min-height:48px;padding:0 14px;border:1px solid var(--line);border-radius:999px;background:var(--solid);font-weight:650}
+.ledger-stats-head{display:flex;align-items:center;gap:12px;margin:4px 0 14px}
+.ledger-stats-head .ledger-seg{flex:1;min-width:0;margin:0}
+.ledger-filter{display:grid;place-items:center;flex:0 0 48px;width:48px;height:48px;padding:0;border:1px solid var(--line);border-radius:50%;background:var(--solid)}
+.ledger-filter svg{width:20px;height:20px}
 .ledger-seg{display:flex;gap:4px;margin:0 0 14px;padding:4px;border-radius:999px;background:rgb(var(--tint) / .1)}
 .ledger-seg button{flex:1;min-height:48px;border-radius:999px;color:var(--muted);font-weight:650}
 .ledger-seg button[aria-pressed=true]{background:var(--ink);color:var(--solid)}
@@ -62,7 +66,8 @@
 .ledger-week-heat{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
 .ledger-week-heat button{display:flex;min-height:64px;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-radius:12px;font-weight:750}
 .ledger-week-heat small{font-size:11px;opacity:.8}
-.ledger-year{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.ledger-year{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.ledger-year::-webkit-scrollbar{display:none}
 .ledger-year-dows{display:flex;flex-direction:column;gap:3px;padding-top:18px;color:var(--muted);font-size:10px;line-height:16px}
 .ledger-year-dows span{height:16px}
 .ledger-year-months{display:flex;gap:3px;height:16px;color:var(--muted);font-size:10px}
@@ -107,7 +112,6 @@
 .ledger-cat i{grid-column:2;height:4px;overflow:hidden;border-radius:4px;background:rgb(var(--tint) / .12)}
 .ledger-cat em{display:block;height:100%;border-radius:4px;background:var(--ink)}
 .ledger-cat small{grid-column:3;color:var(--muted);font-size:12px;text-align:right}
-.ledger-quiet{display:block;margin:16px auto;min-height:48px;color:var(--muted);font-size:13px;text-decoration:underline;text-underline-offset:3px}
 dialog.ledger-sheet{position:fixed;inset:auto 0 0;margin:0 auto;max-width:none}
 dialog.ledger-sheet .ledger-sheet-scroll{flex:1;min-height:0}
 dialog.ledger-sheet .ledger-save{flex-shrink:0}

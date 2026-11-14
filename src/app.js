@@ -95,7 +95,7 @@ function renderHome(){
  }
  if(focusedDot!==undefined)dots.querySelector(`[data-page="${focusedDot}"]`)?.focus({preventScroll:true});
 }
-function goto(next){if(next==='app-memory')next='memory';if(next==='chat'&&composerSession!==state.active){composeDraft='';chatUI.attachments=[];chatUI.replyTo=null;}composerSession=state.active;homeEditor.exit();if(next==='app-gallery')galleryApp.openHome();if(sidebarDialog.open)sidebarDialog.close();chatUI.tray='';page=next;render();app.querySelector('.page-content')?.scrollTo(0,0);if(findApp(next)||['memory','settings'].includes(next))app.querySelector('.desktop-app-header h1,.music-header h1,.moom-header h1')?.focus({preventScroll:true});}
+function goto(next){if(next==='app-memory')next='memory';if(next==='chat'&&composerSession!==state.active){composeDraft='';chatUI.attachments=[];chatUI.replyTo=null;}composerSession=state.active;homeEditor.exit();if(next==='app-gallery')galleryApp.openHome();if(next==='app-ledger'&&page!=='app-ledger')ledgerApp.openHome();if(sidebarDialog.open)sidebarDialog.close();chatUI.tray='';page=next;render();app.querySelector('.page-content')?.scrollTo(0,0);if(findApp(next)||['memory','settings'].includes(next))app.querySelector('.desktop-app-header h1,.music-header h1,.moom-header h1')?.focus({preventScroll:true});}
 function focusSettings(id){if(id==='appearance-settings'){goto('app-appearance');return;}goto('settings');const d=document.getElementById(id);if(d){d.open=true;opened.add(id);d.scrollIntoView({behavior:'smooth',block:'start'});}}
 function showMemoryEditor(item,source=''){dialog.innerHTML=memoryEditor(item,source);dialog.showModal();dialog.querySelector('[name=title]').focus();}
 function closeModal(){dialog.close();}

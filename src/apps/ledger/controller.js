@@ -33,6 +33,13 @@ export function createLedgerApp({app,notify,storage = localStorage}) {
   body.querySelector(`[data-week="${ymd(weekStart(ui.selected))}"]`)?.scrollIntoView({inline:'start',block:'nearest'});
   hydrate(body);
  }
+ // Reopening the App or entering a tab starts at today. Ordinary repaints
+ // preserve the date being browsed, so picking history still works.
+ function openHome() {
+  const today = startOfDay(new Date());
+  ui.selected = today;
+  ui.anchor = new Date(today);
+ }
  async function hydrate(root) {
   for(const image of root.querySelectorAll('[data-ledger-photo]')) {
    const id = image.getAttribute('data-ledger-photo');
@@ -189,7 +196,7 @@ export function createLedgerApp({app,notify,storage = localStorage}) {
   const target = event.target.closest('[data-ledger-action]');
   if(!target || !target.closest('.ledger-app, .ledger-sheet')) return;
   const action = target.dataset.ledgerAction;
-  if(action === 'screen') { ui.screen = target.dataset.screen; paint(); }
+  if(action === 'screen') { ui.screen = target.dataset.screen; openHome(); paint(); }
   else if(action === 'day') { const parts = target.dataset.ymd.split('-').map(Number); ui.selected = new Date(parts[0],parts[1] - 1,parts[2]); ui.screen = 'bill'; paint(); }
   else if(action === 'add') openCreate();
   else if(action === 'edit') void openEdit(target.dataset.id);
@@ -226,7 +233,7 @@ export function createLedgerApp({app,notify,storage = localStorage}) {
   else ui.anchor = new Date(ui.anchor.getFullYear(),ui.anchor.getMonth() + dir,1);
   paint();
  }
- return {sync,paint,ui};
+ return {sync,paint,openHome,ui};
 }
 async function compress(file) {
  if(!file || !/^image\//.test(file.type || '')) throw new Error('请选择图片');
