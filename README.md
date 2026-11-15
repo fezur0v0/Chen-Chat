@@ -26,7 +26,7 @@ python3 -m http.server 5173 --bind 127.0.0.1
 - **桌面 App**：日记、音乐、图库、预设、世界书与档案；记忆和外观从底部入口打开。
 - **备份**：支持完整 ZIP、轻量 JSON 和本机快照；恢复前可预览与校验。
 
-[主页预览](docs/preview-home.webp) · [夜间预览](docs/preview-night.webp) · [聊天预览](docs/preview-chat-playground.webp)
+[主页预览](docs/preview-home.webp) · [夜间预览](docs/preview-night.webp)
 
 ## 数据与功能边界
 

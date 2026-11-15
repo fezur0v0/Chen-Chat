@@ -2,11 +2,9 @@ import {createChatGeneration} from './chat-api/controller.js';
 import {bindProvider} from './provider.js';
 import {createSidebarItemMenu} from './sidebar-menu/controller.js';
 import {createBackupManager} from './backup/controller.js';
-import {memorySnapshots} from './backup/snapshots.js';
 import {musicFile} from './apps/music/files.js';
 import {voiceFile} from './chat-content/voice-files.js';
 import {createGalleryApp} from './apps/gallery/controller.js';
-import {createChatPreview} from './chat-content/preview.js';
 import {createChatMedia} from './chat-content/controller.js';
 import {makeReply} from './chat-content/model.js';
 import {settleTransfer} from './chat-content/transfers.js';
@@ -27,12 +25,8 @@ import { launcherIcon } from './launcher-icons.js';
 import { backButton } from './ui.js';
 import { localDate, loadState, saveState, newSession, addDraftMessage, saveMemory, changeMessage } from './store.js';
 import { home, chat, sessions, settings, memory, memoryEditor, sidebar, escape, button } from './views.js';
-const previewKind=new URLSearchParams(location.search).get('preview');
-const chatPreview=previewKind==='chat'?createChatPreview():null;
-const isolatedPreview=chatPreview;
-let storage;try{storage=isolatedPreview?.storage||localStorage;}catch{storage={getItem:()=>null,setItem:()=>{throw new Error('本机存储不可用');}};}
-let state=loadState(storage), page=isolatedPreview?'chat':'home', memoryFilter='all', memorySearch='', toastTimer, composeDraft='';
-isolatedPreview?.seed(state);
+let storage;try{storage=localStorage;}catch{storage={getItem:()=>null,setItem:()=>{throw new Error('本机存储不可用');}};}
+let state=loadState(storage), page='home', memoryFilter='all', memorySearch='', toastTimer, composeDraft='';
 const app=document.querySelector('#app'), nav=[['home','home','主页'],['chat','chat','对话'],['memory','memory','记忆'],['app-appearance','appearance','外观'],['settings','settings','设置']];
 const opened=new Set();
 let sessionSearch='',oldestFirst=false,composerSession=state.active;
@@ -49,9 +43,9 @@ const ledgerApp=createLedgerApp({app,notify});
 const musicApp=createMusicApp({app,getState:()=>state,setState:value=>{state=value;},persist,notify,compressImage});
 const promptLibraries=createPromptLibraries({app,getState:()=>state,setState:value=>{state=value;},persist,notify});
 const stickerLibrary=createStickerLibrary({app,getState:()=>state,setState:value=>{state=value;},getUI:()=>chatUI,persist,notify,compressImage});
-const chatMedia=createChatMedia({files:isolatedPreview?.files,app,getState:()=>state,getUI:()=>chatUI,isChat:()=>page==='chat',render,notify});
-const generation=createChatGeneration({getState:()=>state,setState:value=>{state=value;},persist,render:renderGeneration,enabled:!isolatedPreview});
-const backupManager=createBackupManager({app,getState:()=>state,storage,media:{music:isolatedPreview?.files||musicFile,voice:isolatedPreview?.files||voiceFile},snapshots:isolatedPreview?memorySnapshots():undefined,allowAuto:!isolatedPreview,persist,notify,applyRestored,canStart:()=>!musicApp.ui.busy&&!galleryApp.ui.busy&&!chatUI.voiceBusy&&!chatUI.voiceRecording&&!generation.isBusy()});
+const chatMedia=createChatMedia({app,getState:()=>state,getUI:()=>chatUI,isChat:()=>page==='chat',render,notify});
+const generation=createChatGeneration({getState:()=>state,setState:value=>{state=value;},persist,render:renderGeneration});
+const backupManager=createBackupManager({app,getState:()=>state,storage,media:{music:musicFile,voice:voiceFile},persist,notify,applyRestored,canStart:()=>!musicApp.ui.busy&&!galleryApp.ui.busy&&!chatUI.voiceBusy&&!chatUI.voiceRecording&&!generation.isBusy()});
 const sidebarItemMenu=createSidebarItemMenu({getState:()=>state,setState:value=>{state=value;},persist,notify,onChange:({kind,id,operation,previousActive})=>{if(kind==='session'&&operation==='delete'&&previousActive===id){composeDraft='';chatUI.attachments=[];chatUI.replyTo=null;composerSession=state.active;}render();}});
 function notify(value){const n=document.querySelector('#notice');n.textContent=value;n.classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>n.classList.remove('visible'),3500);}
 function persist(){try{saveState(storage,state);return true;}catch{notify('本机存储不足或不可用。修改尚未保存，请导出备份或换一张更小的图片。');return false;}}
@@ -86,7 +80,7 @@ function render(){
  if(sidebarDialog.open){const scroll=sidebarDialog.querySelector('.sidebar-conversations')?.scrollTop||0;sidebarDialog.innerHTML=sidebar(state,page);sidebarDialog.querySelector('.sidebar-conversations').scrollTop=scroll;}
  for(const id of opened){const d=document.getElementById(id);if(d)d.open=true;}
  const messages=document.querySelector('#messages');if(messages)messages.scrollTop=messages.scrollHeight;
- const input=app.querySelector('[name=message]');if(input){input.value=composeDraft;input.setSelectionRange(selection.start,selection.end);resizeComposer();}isolatedPreview?.decorate?.({app,state,ui:chatUI,render});updateViewport();syncTray();chatMedia.sync();ledgerApp.sync();diaryApp.sync();
+ const input=app.querySelector('[name=message]');if(input){input.value=composeDraft;input.setSelectionRange(selection.start,selection.end);resizeComposer();}updateViewport();syncTray();chatMedia.sync();ledgerApp.sync();diaryApp.sync();
 }
 // Keep the wallpaper, dock and scroll container mounted during desktop updates.
 function renderHome(){
@@ -182,7 +176,7 @@ app.addEventListener('click',event=>{
 sidebarDialog.addEventListener('click',e=>{if(e.target===sidebarDialog){const r=sidebarDialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)sidebarDialog.close();}else handleAction(e);});
 app.addEventListener('submit',e=>{
  e.preventDefault();const form=e.target,data=Object.fromEntries(new FormData(form));
- if(form.getAttribute('id')==='compose'){if(generation.busy(state.active))return notify('这次回复尚未结束，可以先停止生成。');if(chatUI.voiceBusy||chatUI.voiceRecording)return notify('请先结束录音，等待语音保存完成。');if(!data.message.trim()&&!chatUI.attachments.length)return;const snapshot=structuredClone(state);addDraftMessage(state,data.message,chatUI.attachments,chatUI.replyTo);const ok=persist();if(!ok){state=snapshot;return;}composeDraft='';selection={start:0,end:0};chatUI.attachments=[];chatUI.replyTo=null;chatUI.tray='';render();app.querySelector('[name=message]').focus();if(isolatedPreview)notify('这是隔离预览，消息仅保存在预览中。');else void generation.generate(state.active);}
+ if(form.getAttribute('id')==='compose'){if(generation.busy(state.active))return notify('这次回复尚未结束，可以先停止生成。');if(chatUI.voiceBusy||chatUI.voiceRecording)return notify('请先结束录音，等待语音保存完成。');if(!data.message.trim()&&!chatUI.attachments.length)return;const snapshot=structuredClone(state);addDraftMessage(state,data.message,chatUI.attachments,chatUI.replyTo);const ok=persist();if(!ok){state=snapshot;return;}composeDraft='';selection={start:0,end:0};chatUI.attachments=[];chatUI.replyTo=null;chatUI.tray='';render();app.querySelector('[name=message]').focus();void generation.generate(state.active);}
  else if(form.getAttribute('id')==='persona-form'){if(!data.name.trim())return notify('请填写 AI 名字。');state.persona={name:data.name.trim().slice(0,40),prompt:data.prompt};saveNotice('角色已保存。');}
  else if(form.getAttribute('id')==='plugin-form'){if(!data.name.trim()||!data.url.trim())return notify('请填写名称和服务地址。');if(!validEndpoint(data.url.trim()))return notify('请使用不含密钥、查询参数或账号信息的 HTTPS 地址。');const p={id:data.id||crypto.randomUUID(),name:data.name.trim().slice(0,80),type:data.type,url:data.url.trim()},i=state.plugins.findIndex(x=>x.id===p.id);if(i<0)state.plugins.push(p);else state.plugins[i]=p;saveNotice('配置已保存，插件运行尚未接入。');render();}
 });

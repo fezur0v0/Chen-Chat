@@ -233,10 +233,6 @@
 .compose-row [aria-expanded=true]{background:rgb(var(--tint) / .1)}
 .composer .pending-attachments:empty{display:none}.composer .pending-attachments:not(:empty){padding:7px 6px 8px}
 .composer .reply-compose{margin:6px 7px 5px;padding-bottom:9px}.composer .voice-import-state{padding:9px 10px 5px}
-.chat-preview-entry{display:flex;align-items:center;justify-content:center;gap:5px;min-height:44px;color:var(--muted);text-decoration:none;font-size:12px;border-radius:12px}.chat-preview-entry>svg{width:13px;height:13px}
-.chat-preview-note{display:flex;align-items:center;justify-content:center;gap:14px;margin:0 0 12px;font:11px/1.8 var(--font-ui);color:var(--muted)}
-.chat-preview-note button{min-height:44px;padding:8px 0;color:var(--ink);font-size:12px;text-decoration:underline;text-underline-offset:4px}
-.chat-header-actions .preview-exit{display:grid;place-items:center;width:44px;height:44px;color:var(--ink);border-radius:50%}
 
 :root{--font-story:"Noto Serif SC","Songti SC",SimSun,serif}
 .message .conversation-reply.bubble::after{display:none}
@@ -349,7 +345,6 @@
 }
 .block-hint{margin:0;padding:0 2px;font-size:12px;line-height:1.45;color:var(--quiet);text-align:right}
 .live-read{margin:0;padding:0 4px;font-size:12px;line-height:1.4;color:var(--quiet)}
-.chat-preview-note{flex-wrap:wrap;padding:0 12px;text-align:center}
 /* Only the menu surface frosts the content beneath it; the room stays clear. */
 .message-dialog{
  background:linear-gradient(135deg,rgb(255 255 255 / .2),transparent 58%),rgb(var(--glass-tint) / .4);
