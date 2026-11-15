@@ -12,10 +12,10 @@ export function createChatGeneration({getState,setState,persist,render,enabled=t
  }
  function view(id){
   if(!enabled)return {};
-  const job=jobs.get(id),value=outcomes.get(id),s=session(id);
+  const job=jobs.get(id),value=outcomes.get(id);
   if(job)return {busy:true,model:job.model};
   if(value)return {error:value.error||'',notice:value.notice||'',canRetry:!value.notice,retryLabel:value.pending?'重试保存':value.stopped?'重新生成':'重试',hasUnsaved:!!value.pending};
-  return s?.messages.at(-1)?.role==='user'?{notice:'这条消息还没有 AI 回复。',canRetry:true,retryLabel:'生成回复'}:{};
+  return {};
  }
  function saveReply(id,result,stamp){
   if(!valid(id,stamp))return false;
