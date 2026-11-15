@@ -1,7 +1,8 @@
 import {escape} from './ui.js';
 
 const SECRET_KEY='chenxin.api-credential.v1';
-const defaults={openai:'https://api.openai.com/v1',anthropic:'https://api.anthropic.com/v1',gemini:'https://generativelanguage.googleapis.com/v1beta'};
+const defaults={openai:'https://api.openai.com/v1',deepseek:'https://api.deepseek.com',anthropic:'https://api.anthropic.com/v1',gemini:'https://generativelanguage.googleapis.com/v1beta'};
+export const PROVIDER_PROTOCOLS=Object.freeze(Object.keys(defaults));
 let volatileCredential=null;
 const modelLists=new WeakMap(),selections=new WeakMap();
 
@@ -61,7 +62,7 @@ export function normalizeEndpoint(value,protocol='openai'){
  if(url.protocol!=='https:'||url.username||url.password||url.search||url.hash)throw new Error('请填写不含账号、密钥、查询参数的 HTTPS 基础地址。');
  url.pathname=url.pathname.replace(/\/+$/,'');
  if(/\/(models|messages|chat\/completions)$/.test(url.pathname))throw new Error('请填写基础地址，不要填写 models 或聊天请求的完整路径。');
- if(!url.pathname||url.pathname==='/')url.pathname=protocol==='gemini'?'/v1beta':'/v1';
+ if(!url.pathname||url.pathname==='/')url.pathname=protocol==='deepseek'?'':protocol==='gemini'?'/v1beta':'/v1';
  return url.href.replace(/\/+$/,'');
 }
 
@@ -115,8 +116,8 @@ export async function detectModels(provider,key,{fetcher=globalThis.fetch,signal
 export function providerForm(provider){
  const credential=credentialFor(provider);
  return `<form id="provider-form">
- <label class="field"><span>接口类型</span><select name="protocol">${Object.entries({openai:'OpenAI 兼容',anthropic:'Anthropic',gemini:'Google Gemini'}).map(([id,name])=>`<option value="${id}" ${provider.protocol===id?'selected':''}>${name}</option>`).join('')}</select></label>
- <label class="field"><span>API 基础地址</span><input type="url" name="baseUrl" value="${escape(provider.baseUrl)}" placeholder="https://api.example.com/v1" autocomplete="off"></label>
+ <label class="field"><span>接口类型</span><select name="protocol">${Object.entries({openai:'OpenAI 兼容',deepseek:'DeepSeek',anthropic:'Anthropic',gemini:'Google Gemini'}).map(([id,name])=>`<option value="${id}" ${provider.protocol===id?'selected':''}>${name}</option>`).join('')}</select></label>
+ <label class="field"><span>API 基础地址</span><input type="url" name="baseUrl" value="${escape(provider.baseUrl)}" placeholder="${escape(defaults[provider.protocol]||defaults.openai)}" autocomplete="off"></label>
  <label class="field"><span>API 密钥</span><input type="password" name="apiKey" value="${escape(credential?.key||'')}" autocomplete="off" spellcheck="false"></label>
  <label class="provider-remember"><input type="checkbox" name="rememberKey" ${credential?.remember?'checked':''}><span>在此设备记住密钥</span></label>
  <p class="hint">默认仅本次打开使用；勾选后保存在此设备，未加密，不会随聊天备份导出。只向你填写的服务地址发送密钥。</p>
@@ -132,6 +133,21 @@ export function providerForm(provider){
 export function bindProvider(root,{getState,persist,notify}){
  let active=null;
  const status=(form,message)=>{const el=form.querySelector('[data-provider-status]');if(el)el.textContent=message;};
+ root.addEventListener('change',event=>{
+  const select=event.target;if(!select.matches('#provider-form select[name=protocol]')||select.disabled)return;
+  const form=select.form,protocol=select.value;if(!PROVIDER_PROTOCOLS.includes(protocol))return;
+  active?.abort();
+  const current=form.elements.baseUrl.value.trim().replace(/\/+$/,'');
+  const official=Object.values(defaults).some(url=>current===url||current===new URL(url).origin)||current==='https://api.deepseek.com/v1';
+  if(!current||official)form.elements.baseUrl.value=defaults[protocol];
+  form.elements.baseUrl.placeholder=defaults[protocol];
+  modelLists.delete(form);selections.set(form,[]);form.elements.model.value='';
+  const picker=form.querySelector('[data-provider-picker]');picker.dataset.selectedModels='[]';
+  form.querySelector('[data-provider-selection]').textContent='点击选择，可多选';
+  const credential=credentialFor({protocol,baseUrl:form.elements.baseUrl.value});
+  form.elements.apiKey.value=credential?.key||'';form.elements.rememberKey.checked=credential?.remember===true;
+  status(form,'接口类型已切换，请填写对应密钥，再检测或手动选择模型；保存前原配置保持不变。');
+ });
  const read=form=>{
   const data=new FormData(form),protocol=String(data.get('protocol'));
   const model=String(data.get('model')).trim(),models=selectedModels({model,models:selections.get(form)||JSON.parse(form.querySelector('[data-provider-picker]').dataset.selectedModels)});

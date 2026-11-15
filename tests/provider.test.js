@@ -65,3 +65,28 @@ test('selected model collection migrates old defaults and round-trips through ba
  assert.ok(providerChoices(restored.provider,'extra').includes('data-model="extra"'));
  assert.ok(!providerChoices({model:'<script>',models:[]},'').includes('<script>'));
 });
+
+test('DeepSeek defaults to its official root models endpoint and retains explicit custom paths',async()=>{
+ assert.equal(normalizeEndpoint('','deepseek'),'https://api.deepseek.com');
+ assert.equal(normalizeEndpoint('https://api.deepseek.com/','deepseek'),'https://api.deepseek.com');
+ assert.equal(normalizeEndpoint('https://api.deepseek.com/v1/','deepseek'),'https://api.deepseek.com/v1');
+ assert.equal(normalizeEndpoint('https://example.com/proxy/v1/','deepseek'),'https://example.com/proxy/v1');
+ let requests=0;
+ const models=await detectModels({protocol:'deepseek',baseUrl:''},' test-deepseek-key ',{fetcher:async(url,options)=>{
+  requests++;assert.equal(url,'https://api.deepseek.com/models');assert.equal(options.headers.Authorization,'Bearer test-deepseek-key');
+  assert.equal(options.credentials,'omit');assert.equal(options.redirect,'error');assert.equal(options.cache,'no-store');
+  return {ok:true,json:async()=>({object:'list',data:[{id:'model-b'},{id:'model-a'},{id:'model-a'},{id:null}]})};
+ }});
+ assert.equal(requests,1);assert.deepEqual(models,['model-a','model-b']);
+});
+test('DeepSeek configuration and selected models persist, with credentials isolated from other protocols and backups',()=>{
+ const state=createState();state.provider={protocol:'deepseek',baseUrl:'https://api.deepseek.com',model:'model-a',models:['model-a','model-b']};
+ const map=new Map(),storage={getItem:k=>map.get(k),setItem:(k,v)=>map.set(k,v),removeItem:k=>map.delete(k)};
+ storeCredential(state.provider,'fake-deepseek-key',true,storage);
+ assert.equal(credentialFor(state.provider,storage).key,'fake-deepseek-key');
+ assert.equal(credentialFor({...state.provider,protocol:'openai'},storage),null);
+ assert.deepEqual(normalizeState(JSON.parse(exportData(state))).provider,state.provider);
+ assert.doesNotMatch(exportData(state),/fake-deepseek-key/);
+ assert.match(providerForm(state.provider),/<option value="deepseek" selected>DeepSeek<\/option>/);
+ storeCredential(state.provider,'',false,storage);
+});
