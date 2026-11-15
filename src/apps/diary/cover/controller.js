@@ -5,7 +5,7 @@ import {bindTouchRipple,touchRippleFinished} from '../../../components/touch-rip
 
 export function createDiaryCover({app,getState,setState,persist,notify,ui,refresh,enter}){
  const dialog=document.createElement('dialog');dialog.className='dc-editor glass app-sheet bottom-sheet';dialog.setAttribute('aria-label','编辑日记封面');document.body.append(dialog);bindTouchRipple(dialog);
- let draft,owner='self',uploading=false,closing=false,waiting=false,revision=0,animationRevision=0,opening=false,returnFocus;
+ let draft,owner='self',uploading=false,closing=false,waiting=false,revision=0,animationRevision=0,opening=false,contentAnimation=null,returnFocus;
  const motion=()=>!matchMedia('(prefers-reduced-motion: reduce)').matches;
  function readDraft(){if(!draft)return;draft[owner].name=dialog.querySelector('[name=cover-name]')?.value||'';draft[owner].signature=dialog.querySelector('[name=cover-signature]')?.value||'';}
  function paintEditor(){dialog.innerHTML=coverEditor(draft,owner);}
@@ -23,20 +23,25 @@ export function createDiaryCover({app,getState,setState,persist,notify,ui,refres
   finally{uploading=false;if(dialog.open&&current===revision){dialog.querySelectorAll('button,input,textarea').forEach(n=>n.disabled=false);dialog.querySelectorAll('[data-diary-cover-action=clear]').forEach(n=>n.disabled=!draft[owner][n.dataset.kind]);}}
  });
  dialog.addEventListener('submit',event=>{event.preventDefault();if(uploading||closing||waiting||!draft)return;readDraft();const previous=structuredClone(getState());saveDiaryCover(getState(),draft);if(!persist()){setState(previous);const alert=dialog.querySelector('[role=alert]');alert.hidden=false;alert.textContent='封面没有保存，本机空间可能不足。你的修改仍保留在这里。';return;}void afterButton(event.submitter,()=>{dialog.close();refresh();notify('日记封面已保存。');});});
- async function openEntry(entry){
-  if(opening)return;opening=true;const current=++animationRevision;let ghost;
+ // Fade only the content. Keep the header in place and never stretch a paper clone.
+ async function switchContent(change){
+  if(opening)return;
+  const body=app.querySelector('.diary-app .desktop-app-body');if(!body)return;
+  opening=true;const current=++animationRevision;let animation;
   try{
    if(motion()){
-    const card=entry.querySelector('.dc-profile'),rect=card.getBoundingClientRect(),bounds=app.querySelector('.diary-app').getBoundingClientRect(),header=app.querySelector('.diary-app>.app-topbar').getBoundingClientRect();
-    ghost=card.cloneNode(true);ghost.classList.add('dc-transition-paper');ghost.setAttribute('aria-hidden','true');
-    Object.assign(ghost.style,{left:rect.left+'px',top:rect.top+'px',width:rect.width+'px',height:rect.height+'px',minHeight:'0',transform:'none',padding:'18px'});document.body.append(ghost);
-    ghost.querySelector('.dc-profile-body').animate([{opacity:1},{opacity:0}],{duration:140,fill:'forwards'});
-    entry.classList.add('is-opening');
-    await ghost.animate([{transform:'translate(0,0) scale(1)'},{transform:`translate(${bounds.left+12-rect.left}px,${header.bottom+8-rect.top}px) scale(${(bounds.width-24)/rect.width},${Math.max(320,Math.min(innerHeight-header.bottom-24,600))/rect.height})`}],{duration:520,easing:'cubic-bezier(.2,.75,.15,1)',fill:'forwards'}).finished.catch(()=>{});
+    animation=body.animate([{opacity:1},{opacity:0}],{duration:150,easing:'ease-in',fill:'forwards'});contentAnimation=animation;
+    await animation.finished.catch(()=>{});
    }
-   if(current!==animationRevision||!entry.isConnected)return;enter(diaryOwner(entry.dataset.owner));
-  }finally{ghost?.remove();entry.classList.remove('is-opening');if(current===animationRevision)opening=false;}
+   if(current!==animationRevision||!body.isConnected)return;
+   change();
+   animation?.cancel();
+   if(motion()){
+    animation=body.animate([{opacity:0},{opacity:1}],{duration:220,easing:'ease-out',fill:'forwards'});contentAnimation=animation;
+    await animation.finished.catch(()=>{});
+   }
+  }finally{animation?.cancel();if(current===animationRevision){contentAnimation=null;opening=false;}}
  }
- app.addEventListener('click',event=>{const target=event.target.closest('.diary-app [data-diary-cover-action]');if(!target)return;const action=target.dataset.diaryCoverAction;if(action==='edit'){openEditor();return;}if(action==='back'){ui.screen='cover';ui.coverSelected='';refresh();app.querySelector('.page-content').scrollTop=0;return;}if(action==='select'&&!opening){const owner=diaryOwner(target.dataset.owner);if(ui.coverSelected===owner){void openEntry(target);return;}ui.coverSelected=owner;app.querySelectorAll('.dc-entry').forEach(n=>{const selected=n.dataset.owner===owner;n.classList.toggle('is-selected',selected);n.setAttribute('aria-pressed',String(selected));n.setAttribute('aria-label',(normalizeDiaryCover(getState().diaryCover)[n.dataset.owner].name||(n.dataset.owner==='self'?'我的日记':'TA 的日记'))+'，'+(selected?'再次轻触进入':'轻触选中'));});}});
- return {reset(){animationRevision++;opening=false;document.querySelectorAll('.dc-transition-paper').forEach(n=>n.remove());ui.screen='cover';ui.coverSelected='';}};
+ app.addEventListener('click',event=>{const target=event.target.closest('.diary-app [data-diary-cover-action]');if(!target||opening)return;const action=target.dataset.diaryCoverAction;if(action==='edit'){openEditor();return;}if(action==='back'){void switchContent(()=>{ui.screen='cover';ui.coverSelected='';refresh();app.querySelector('.page-content').scrollTop=0;app.querySelector('.diary-app h1')?.focus({preventScroll:true});});return;}if(action==='select'&&!opening){const owner=diaryOwner(target.dataset.owner);if(ui.coverSelected===owner){void switchContent(()=>enter(diaryOwner(target.dataset.owner)));return;}ui.coverSelected=owner;app.querySelectorAll('.dc-entry').forEach(n=>{const selected=n.dataset.owner===owner;n.classList.toggle('is-selected',selected);n.setAttribute('aria-pressed',String(selected));n.setAttribute('aria-label',(normalizeDiaryCover(getState().diaryCover)[n.dataset.owner].name||(n.dataset.owner==='self'?'我的日记':'TA 的日记'))+'，'+(selected?'再次轻触进入':'轻触选中'));});}});
+ return {reset(){animationRevision++;opening=false;contentAnimation?.cancel();contentAnimation=null;ui.screen='cover';ui.coverSelected='';}};
 }
