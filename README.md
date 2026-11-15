@@ -52,3 +52,7 @@ python3 -m http.server 5173 --bind 127.0.0.1
 npm run check
 npm test
 ```
+
+`npm test` 会自动发现 `src/` 和 `scripts/` 中的 JavaScript 文件并检查语法，包括新增模块；增加文件时无需为了补充检查名单反复修改 `package.json`。`npm run check` 保留原有稳定命令。
+
+安卓打包依赖目前保留在本机。仅更新页面和功能时，保留本地 `package.json` 中的 Capacitor 依赖；`.idea` 和 `.idea-backup` 属于 IDE 本机配置，已统一忽略。
