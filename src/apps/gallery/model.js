@@ -32,7 +32,7 @@ export function normalizeGallery(value){
   photoIds.add(id);
   const origin=item.origin==='assistant'?'assistant':item.origin==='diary'?'diary':'upload';
   const source=origin==='assistant'?{sessionId:text(item.source?.sessionId,100),messageId:text(item.source?.messageId,100),attachmentId:text(item.source?.attachmentId,100)}:null;
-  const photo={id,data,name:text(item.name,180)||'照片',caption:text(item.caption,1000),time:date(item.time),addedAt:date(item.addedAt),albumId:'',albumIds:memberships(item,albumIds),origin,source};
+  const photo={id,data,name:text(item.name,180)||'照片',caption:text(item.caption,1000),time:date(item.time),addedAt:date(item.addedAt),albumId:'',albumIds:memberships(item,albumIds),favorite:item.favorite===true,origin,source};
   syncMembership(photo);gallery.photos.push(photo);
  }
  cleanCovers(gallery);
@@ -61,7 +61,7 @@ function targetAlbum(gallery,id){if(id&&!gallery.albums.some(a=>a.id===id))throw
 function photoRecord(item,target,origin,source=null){
  const data=image(item.data);if(!data)throw new Error('照片格式无法保存，请选择 JPG、PNG 或 WebP 图片。');
  const albumIds=target?[target]:[];
- return {id:crypto.randomUUID(),data,name:text(item.name,180)||'照片',caption:text(item.caption,1000),time:date(item.time),addedAt:Date.now(),albumId:albumIds[0]||'',albumIds,origin,source};
+ return {id:crypto.randomUUID(),data,name:text(item.name,180)||'照片',caption:text(item.caption,1000),time:date(item.time),addedAt:Date.now(),albumId:albumIds[0]||'',albumIds,favorite:item.favorite===true,origin,source};
 }
 export function addUploadedPhotos(gallery,items,albumId=''){
  const target=targetAlbum(gallery,albumId);if(!items.length)throw new Error('请先选择照片。');
@@ -105,6 +105,19 @@ export function deleteAlbum(gallery,id){
  for(const photo of gallery.photos)if(photo.albumIds.includes(id)){photo.albumIds=photo.albumIds.filter(album=>album!==id);syncMembership(photo);}
  gallery.albums.forEach((album,order)=>{album.order=order;});
  cleanCovers(gallery);
+}
+export function favoritePhoto(gallery,id,favorite){
+ const photo=gallery.photos.find(p=>p.id===id);if(!photo)throw new Error('这张照片已不存在。');
+ photo.favorite=favorite===true;return photo;
+}
+export const APPEARANCE_IMAGE_KEYS=['wallpaper','splashWallpaper','userAvatar','aiAvatar'];
+// Writes one existing appearance image. Home wallpaper and splash stay separate,
+// and the user avatar never replaces the AI avatar.
+export function assignAppearanceImage(state,key,data){
+ if(!APPEARANCE_IMAGE_KEYS.includes(key))throw new Error('请选择要设置的壁纸或头像。');
+ const safe=image(data);if(!safe)throw new Error('这张图片无法用于壁纸或头像。');
+ if(!state.appearance)throw new Error('外观设置不可用。');
+ const previous=state.appearance[key];state.appearance[key]=safe;return {key,previous,data:safe};
 }
 export function updatePhoto(gallery,input){
  const photo=gallery.photos.find(p=>p.id===input.id);if(!photo)throw new Error('这张照片已不存在。');

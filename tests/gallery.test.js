@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createState,normalizeState,addDraftMessage,exportData} from '../src/store.js';
-import {emptyGallery,normalizeGallery,saveAlbum,addUploadedPhotos,albumPhotos,photoGroups,copyPhotos,movePhotos,removeFromAlbum,reorderAlbums,deletePhotos,deleteAlbum,updatePhoto,saveChatPhoto,detachDiaryPhotoRefs,collection,GALLERY_COLLECTIONS} from '../src/apps/gallery/model.js';
+import {emptyGallery,normalizeGallery,saveAlbum,addUploadedPhotos,albumPhotos,photoGroups,copyPhotos,movePhotos,removeFromAlbum,reorderAlbums,deletePhotos,deleteAlbum,updatePhoto,favoritePhoto,saveChatPhoto,detachDiaryPhotoRefs,collection,GALLERY_COLLECTIONS,assignAppearanceImage} from '../src/apps/gallery/model.js';
 const image='data:image/png;base64,aGVsbG8=';
 const upload=(gallery,name='照片',albumId='',time=Date.now())=>addUploadedPhotos(gallery,[{data:image,name,time}],albumId)[0];
 
@@ -88,4 +88,34 @@ test('deleting photos clears reserved diary references and does not invent diary
  assert.deepEqual(state.diaryEntries[0].photoIds,['keep']);assert.deepEqual(state.diaryEntries[0].images,[]);assert.equal(state.gallery.photos.length,0);
  const plain=createState();plain.diaryEntries=[{id:'entry',content:'没有照片'}];detachDiaryPhotoRefs(plain,['page']);
  assert.equal(Object.hasOwn(plain.diaryEntries[0],'photoIds'),false);assert.equal(Object.hasOwn(plain.diaryEntries[0],'images'),false);
+});
+test('favorites persist through backup and missing flags stay off',()=>{
+ const state=createState(),photo=upload(state.gallery,'窗');
+ assert.equal(photo.favorite,false);favoritePhoto(state.gallery,photo.id,true);
+ const restored=normalizeState(JSON.parse(exportData(state)));
+ assert.equal(restored.gallery.photos[0].favorite,true);assert.equal(restored.gallery.photos[0].data,image);
+ const legacy=normalizeGallery({photos:[{id:'old',data:image,albumId:''}]});
+ assert.equal(legacy.photos[0].favorite,false);
+});
+test('copy and move do nothing until they are actually called, including a newly created album',()=>{
+ const gallery=emptyGallery(),first=saveAlbum(gallery,{name:'甲'}),photo=upload(gallery,'海',first.id);
+ const before=structuredClone(gallery.photos.map(item=>({id:item.id,data:item.data,albumIds:[...item.albumIds]})));
+ assert.deepEqual(gallery.photos.map(item=>({id:item.id,data:item.data,albumIds:[...item.albumIds]})),before);
+ const created=saveAlbum(gallery,{name:'新'});
+ assert.equal(albumPhotos(gallery,created.id).length,0);assert.equal(gallery.photos.length,1);assert.equal(gallery.photos[0].data,image);
+ copyPhotos(gallery,[photo.id],created.id);assert.deepEqual(photo.albumIds,[first.id,created.id]);assert.equal(gallery.photos.length,1);
+ movePhotos(gallery,[photo.id],created.id);assert.deepEqual(photo.albumIds,[created.id]);assert.equal(photo.data,image);
+ assert.throws(()=>copyPhotos(gallery,[photo.id],'all'));assert.throws(()=>movePhotos(gallery,[photo.id],'diary'));
+ assert.deepEqual(photo.albumIds,[created.id]);
+});
+test('wallpaper and avatar writes change only the chosen target and keep the gallery photo',()=>{
+ const state=createState(),photo=upload(state.gallery,'窗');
+ assignAppearanceImage(state,'wallpaper',photo.data);
+ assert.equal(state.appearance.wallpaper,photo.data);assert.equal(state.appearance.splashWallpaper,'');assert.equal(state.appearance.userAvatar,'');assert.equal(state.appearance.aiAvatar,'');
+ assignAppearanceImage(state,'userAvatar',photo.data);
+ assert.equal(state.appearance.userAvatar,photo.data);assert.equal(state.appearance.aiAvatar,'');assert.equal(state.appearance.wallpaper,photo.data);
+ assignAppearanceImage(state,'splashWallpaper',photo.data);assert.equal(state.appearance.wallpaper,photo.data);assert.equal(state.gallery.photos[0].data,photo.data);
+ const restored=normalizeState(JSON.parse(exportData(state)));
+ assert.equal(restored.appearance.wallpaper,photo.data);assert.equal(restored.appearance.splashWallpaper,photo.data);assert.equal(restored.appearance.userAvatar,photo.data);assert.equal(restored.appearance.aiAvatar,'');
+ assert.throws(()=>assignAppearanceImage(state,'both',photo.data));assert.equal(state.appearance.aiAvatar,'');
 });

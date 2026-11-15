@@ -41,7 +41,7 @@ const expressionDialog=document.createElement('dialog');expressionDialog.classNa
 let expressionClosing=false,expressionRevision=0;
 const dialog=document.createElement('dialog');dialog.id='memory-dialog';dialog.className='glass';document.body.append(dialog);
 const homeEditor=createHomeEditor({app,getState:()=>state,setState:value=>{state=value;},persist,renderHome,notify,compressImage,openApp:goto});
-const galleryApp=createGalleryApp({app,getState:()=>state,setState:value=>{state=value;},persist,notify,compressImage});
+const galleryApp=createGalleryApp({app,getState:()=>state,setState:value=>{state=value;},persist,notify,compressImage,render:()=>render()});
 const diaryApp=createDiaryApp({app,getState:()=>state,setState:value=>{state=value;},persist,notify});
 const ledgerApp=createLedgerApp({app,notify});
 const musicApp=createMusicApp({app,getState:()=>state,setState:value=>{state=value;},persist,notify,compressImage});

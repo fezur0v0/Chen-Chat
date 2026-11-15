@@ -1,6 +1,5 @@
 import {escape,backButton,field} from '../../ui.js';
 import {icon} from '../../icons.js';
-import {drawerHeader} from '../../drawer.js';
 import {albumPhotos,collection,photoGroups,GALLERY_COLLECTIONS} from './model.js';
 const action=(value,label,symbol,extra='')=>`<button type="button" data-gallery-action="${value}" aria-label="${escape(label)}" ${extra}>${icon(symbol)}</button>`;
 const capsule=(value,label,symbol,extra='')=>`<button type="button" class="gallery-capsule-button" data-gallery-action="${value}" aria-label="${escape(label)}" data-hint="${escape(label)}" ${extra}>${icon(symbol)}</button>`;
@@ -26,7 +25,7 @@ function albumCard(data,album,{custom=false}={}){
 function bar(ui){
  if(ui.selecting){
   const count=ui.selected?.length||0,inAlbum=customAlbum(ui.albumId);
-  return `<div class="gallery-capsule" role="toolbar" aria-label="已选 ${count} 张"><span class="sr-only" role="status">已选 ${count} 张</span>${capsule('copy','复制到相册','copy',count?'':'disabled')}${capsule('move','移动到相册','folder-input',count?'':'disabled')}${capsule('remove-from-album','从相册移除','folder-minus',count&&inAlbum?'':'disabled')}${capsule('delete-photos','彻底删除','trash',count?'':'disabled')}</div>`;
+  return `<div class="gallery-capsule" role="toolbar" aria-label="已选 ${count} 张"><span class="sr-only" role="status">已选 ${count} 张</span>${capsule('add-to','添加到','folder-plus',count?'':'disabled')}${capsule('remove-from-album','从相册移除','folder-minus',count&&inAlbum?'':'disabled')}${capsule('delete-photos','彻底删除','trash',count?'':'disabled')}</div>`;
  }
  const albums=ui.view==='album'||!!ui.albumId;
  return `<div class="gallery-capsule" role="tablist" aria-label="图库视图">${capsule('show-time','时间轴','clock',`role="tab" aria-selected="${!albums}"`)}${capsule('show-albums','相册','layout',`role="tab" aria-selected="${albums}"`)}</div>`;
@@ -49,28 +48,37 @@ export function gallery(state,ui={}){
  }else body=timeline(albumPhotos(data,'all'),ui,selected);
  return `<div class="gallery-app-inner ${ui.selecting?'is-selecting':''}">${header}${ui.busy?'<p class="gallery-importing" role="status">正在整理照片…</p>':''}${body}${bar(ui)}</div>`;
 }
-export function gallerySheet(kind,state,ui,item){
- const data=state.gallery;
- const titles={album:item?.id?'编辑相册':'新建相册',photo:'照片信息',move:'移动到相册',copy:'复制到相册','delete-photos':'彻底删除','delete-album':'删除相册'};
- const start=`${drawerHeader({title:titles[kind],action:'close',actionAttribute:'data-gallery-action'})}<p class="gallery-sheet-error" role="alert" hidden></p>`;
- if(kind==='album'){
-  const photos=item?.id?albumPhotos(data,item.id):[];
-  return `${start}<div class="drawer-scroll"><form id="gallery-album-form"><input type="hidden" name="id" value="${escape(item?.id||'')}">${field('相册名称','name',item?.name||'','例如：一起走过的地方')}<label class="field"><span>相册描述</span><textarea name="description" rows="3" maxlength="500" placeholder="给这些画面留一句话。">${escape(item?.description||'')}</textarea></label>${photos.length?`<fieldset class="gallery-cover-picker"><legend>相册封面</legend><label class="gallery-cover-auto"><input type="radio" name="coverId" value="" ${!item.coverId?'checked':''}>自动使用最新照片</label><div>${photos.map(photo=>`<label class="gallery-cover-choice"><input type="radio" name="coverId" value="${escape(photo.id)}" ${photo.id===item.coverId?'checked':''}><img src="${escape(photo.data)}" alt="使用 ${escape(photo.name)} 作为封面" loading="lazy"></label>`).join('')}</div></fieldset>`:''}<footer class="gallery-sheet-footer">${item?.id?`<button type="button" class="gallery-danger" data-gallery-action="delete-album" data-id="${escape(item.id)}">删除相册</button>`:''}<button type="submit" class="primary">保存</button></footer></form></div>`;
- }
- if(kind==='photo'){
-  const d=new Date(item.time),local=new Date(item.time-d.getTimezoneOffset()*60000).toISOString().slice(0,16);
-  const origin=item.origin==='diary'?'来自日记':item.origin==='assistant'?'由 AI 在对话中珍藏':'由你上传';
-  return `${start}<div class="drawer-scroll"><form id="gallery-photo-form"><input type="hidden" name="id" value="${escape(item.id)}">${field('照片名称','name',item.name,'为这张照片命名')}${field('照片日期','date',local,'','datetime-local')}<p class="gallery-field-note">日期决定照片在时间轴中的位置。</p><label class="field"><span>照片备注</span><textarea name="caption" rows="3" maxlength="1000" placeholder="记下这个瞬间。">${escape(item.caption)}</textarea></label><p class="gallery-field-note">${origin}</p><footer class="gallery-sheet-footer"><button type="submit" class="primary">保存</button></footer></form></div>`;
- }
- if(kind==='move'||kind==='copy'){
-  const verb=kind==='copy'?'复制到':'移动到',note=kind==='copy'?'照片仍只有一份，只是同时出现在这个相册里。':'照片会改到这个相册，不再留在原来的自建相册里。';
-  return `${start}<div class="drawer-scroll"><p class="gallery-sheet-description">${verb} ${ui.selected.length} 张照片。${note}</p><div class="gallery-destination-list">${kind==='move'?`<button type="button" data-gallery-action="move-to" data-id="">${icon('image')}<span>不归入自建相册<small>仍保留在所有照片中</small></span>${icon('chevron')}</button>`:''}${data.albums.map(album=>`<button type="button" data-gallery-action="${kind}-to" data-id="${escape(album.id)}">${icon('folder')}<span>${escape(album.name)}<small>${albumPhotos(data,album.id).length} 张照片</small></span>${icon('chevron')}</button>`).join('')}</div><button type="button" class="gallery-new-destination" data-gallery-action="new-destination">${icon('plus')}新建相册并${kind==='copy'?'复制':'移动'}</button></div>`;
- }
- if(kind==='delete-album')return `${start}<p class="gallery-sheet-description">删除「${escape(item.name)}」？<br>里面的照片会保留在图库中。</p><footer class="gallery-sheet-footer"><button type="button" class="secondary" data-gallery-action="close">取消</button><button type="button" class="primary gallery-danger-fill" data-gallery-action="confirm-delete-album" data-id="${escape(item.id)}">删除相册</button></footer>`;
- const diary=item?.diary?'<br>这些照片来自日记。彻底删除后，对应日记里的引用也会一并移除。':'';
- return `${start}<p class="gallery-sheet-description">彻底删除选中的 ${ui.selected.length} 张照片？<br>照片会从图库中移除，聊天里的原图会保留。${diary}</p><footer class="gallery-sheet-footer"><button type="button" class="secondary" data-gallery-action="close">取消</button><button type="button" class="primary gallery-danger-fill" data-gallery-action="confirm-delete-photos">彻底删除</button></footer>`;
+const originLabel=photo=>photo.origin==='diary'?'日记':photo.origin==='assistant'?'对话珍藏':'我上传的';
+const clockLabel=time=>{const d=new Date(time);return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;};
+const localDateValue=time=>{const d=new Date(time);return new Date(time-d.getTimezoneOffset()*60000).toISOString().slice(0,16);};
+export function galleryAlbumForm(state,item){
+ const data=state.gallery,photos=item?.id?albumPhotos(data,item.id):[];
+ return `<form class="gallery-form" id="gallery-album-form"><h2>${item?.id?'编辑相册':'新建相册'}</h2><p class="gallery-form-error" role="alert" hidden></p><input type="hidden" name="id" value="${escape(item?.id||'')}">${field('相册名称','name',item?.name||'','例如：一起走过的地方')}<label class="field"><span>相册描述</span><textarea name="description" rows="3" maxlength="500" placeholder="给这些画面留一句话。">${escape(item?.description||'')}</textarea></label>${photos.length?`<fieldset class="gallery-cover-picker"><legend>相册封面</legend><label class="gallery-cover-auto"><input type="radio" name="coverId" value="" ${!item.coverId?'checked':''}>自动使用最新照片</label><div>${photos.map(photo=>`<label class="gallery-cover-choice"><input type="radio" name="coverId" value="${escape(photo.id)}" ${photo.id===item.coverId?'checked':''}><img src="${escape(photo.data)}" alt="使用 ${escape(photo.name)} 作为封面" loading="lazy"></label>`).join('')}</div></fieldset>`:''}<div class="gallery-form-actions">${item?.id?`<button type="button" class="gallery-danger" data-gallery-action="delete-album" data-id="${escape(item.id)}">删除相册</button>`:''}<button type="button" data-gallery-action="close-popup">取消</button><button type="submit">保存</button></div></form>`;
 }
-export function galleryViewer(photo,index,total,noteOpen=false){
- const origin=photo.origin==='diary'?'日记':photo.origin==='assistant'?'对话珍藏':'我上传的';
- return `<header class="gallery-viewer-header">${backButton('close-viewer','关闭照片',{actionAttribute:'data-gallery-action'})}<span>${index+1} / ${total}</span>${action('edit-photo','编辑照片信息','more')}</header><div class="gallery-viewer-stage"><img src="${escape(photo.data)}" alt="${escape(photo.name)}" draggable="false"></div><footer class="gallery-viewer-footer ${noteOpen?'is-open':''}"><button type="button" class="gallery-note-toggle" data-gallery-action="toggle-note" aria-expanded="${noteOpen}" aria-label="${noteOpen?'收起备注':'展开备注'}">${icon(noteOpen?'down':'up')}</button><strong>${escape(photo.name)}</strong><time datetime="${new Date(photo.time).toISOString()}">${dayLabel(photo.time)} · ${origin}</time><form class="gallery-note-form" ${noteOpen?'':'hidden'}><label><span class="sr-only">照片备注</span><textarea name="caption" maxlength="1000" placeholder="写下这一张的备注。">${escape(photo.caption)}</textarea></label><button type="submit" aria-label="保存备注">${icon('check')}</button></form><div class="gallery-viewer-nav">${action('previous-photo','上一张照片','back',index===0?'disabled':'')}${action('next-photo','下一张照片','back',`class="gallery-next" ${index===total-1?'disabled':''}`)}</div></footer>`;
+export function galleryConfirm({title,body,confirmAction,confirmLabel,id=''}){
+ return `<div class="gallery-confirm"><h2>${escape(title)}</h2><p>${escape(body)}</p><div class="gallery-form-actions"><button type="button" data-gallery-action="close-popup">取消</button><button type="button" class="gallery-danger-fill" data-gallery-action="${escape(confirmAction)}" data-id="${escape(id)}">${escape(confirmLabel)}</button></div></div>`;
+}
+export function photoDetail(photo){
+ return `<form class="gallery-detail-form"><p class="gallery-form-error" role="alert" hidden></p><label class="gallery-detail-name"><span>名称</span><input name="name" maxlength="180" value="${escape(photo.name)}"></label><label class="gallery-detail-caption"><span>备注</span><textarea name="caption" maxlength="1000" placeholder="写下这一张的备注。">${escape(photo.caption)}</textarea></label><div class="gallery-detail-meta"><label><span>时间</span><input name="date" type="datetime-local" required min="0001-01-01T00:00" max="9999-12-31T23:59" value="${localDateValue(photo.time)}"></label><span>${originLabel(photo)}</span></div><div class="gallery-form-actions"><button type="button" data-gallery-action="close-detail">取消</button><button type="submit">保存</button></div></form>`;
+}
+export function addPicker(gallery){
+ const cards=gallery.albums.map(album=>{
+  const photos=albumPhotos(gallery,album.id),cover=photos.find(p=>p.id===album.coverId)||photos[0];
+  return `<button type="button" class="gallery-add-card" data-gallery-action="choose-album" data-id="${escape(album.id)}" aria-label="选择相册 ${escape(album.name)}，${photos.length} 张"><span class="gallery-album-cover ${cover?'':'is-empty'}">${cover?`<img src="${escape(cover.data)}" alt="" loading="lazy">`:icon('folder')}</span><strong>${escape(album.name)}</strong><small>${photos.length} 张</small></button>`;
+ }).join('');
+ return `<header class="gallery-picker-bar">${action('close-picker','返回','back')}<h2>添加到</h2><button type="button" data-gallery-action="close-picker">取消</button></header><button type="button" class="gallery-new-album" data-gallery-action="create-target">${icon('plus')}新建相册</button>${cards?`<div class="gallery-add-grid">${cards}</div>`:'<p class="gallery-footnote">还没有可添加的自建相册。</p>'}`;
+}
+export function addChoice(album){
+ return `<div class="gallery-choice"><h2>选择添加方式</h2><p>「${escape(album.name)}」<br>确认前不会改动照片所属相册。</p><button type="button" data-gallery-action="confirm-copy">复制</button><button type="button" data-gallery-action="confirm-move">移动</button><button type="button" data-gallery-action="close-popup">取消</button></div>`;
+}
+export function wallpaperChoice(){
+ return `<div class="gallery-choice"><h2>设为壁纸</h2><p>主页和开屏各自独立，只会改你点的那一项。</p><button type="button" data-gallery-action="apply-appearance" data-key="wallpaper">主页壁纸</button><button type="button" data-gallery-action="apply-appearance" data-key="splashWallpaper">开屏壁纸</button><button type="button" data-gallery-action="close-popup">取消</button></div>`;
+}
+export function avatarChoice(state){
+ const user=state.home?.userName||'我',ai=state.persona?.name||'AI';
+ return `<div class="gallery-choice"><h2>设为头像</h2><p>只替换选中的一个头像。</p><button type="button" data-gallery-action="apply-appearance" data-key="userAvatar">${escape(user)} 的头像</button><button type="button" data-gallery-action="apply-appearance" data-key="aiAvatar">${escape(ai)} 的头像</button><button type="button" data-gallery-action="close-popup">取消</button></div>`;
+}
+export function galleryViewer(photos,index){
+ const photo=photos[index],when=dayLabel(photo.time);
+ return `<header class="gallery-viewer-header">${action('close-viewer','返回','back')}<div class="gallery-viewer-when"><strong>${when}</strong><small>${clockLabel(photo.time)}</small></div>${action('favorite',photo.favorite?'取消收藏':'收藏','heart',`aria-pressed="${photo.favorite===true}" class="${photo.favorite?'is-on':''}"`)}${action('info','照片详情','info')}</header><div class="gallery-viewer-stage"><img data-id="${escape(photo.id)}" src="${escape(photo.data)}" alt="${escape(photo.name)}" draggable="false"></div><div class="gallery-filmstrip" role="listbox" aria-label="照片胶片">${photos.map((item,itemIndex)=>`<button type="button" class="gallery-film ${itemIndex===index?'is-current':''}" data-gallery-action="film" data-index="${itemIndex}" data-id="${escape(item.id)}" role="option" aria-selected="${itemIndex===index}" aria-label="${escape(item.name)}"><img src="${escape(item.data)}" alt="" draggable="false"></button>`).join('')}</div><div class="gallery-capsule gallery-viewer-capsule" role="toolbar" aria-label="照片操作">${capsule('delete-current','删除这张照片','trash')}${capsule('more','更多','more')}</div><div class="gallery-more" hidden><button type="button" data-gallery-action="set-wallpaper">设为壁纸</button><button type="button" data-gallery-action="set-avatar">设为头像</button><button type="button" data-gallery-action="add-to">添加到</button></div>`;
 }
