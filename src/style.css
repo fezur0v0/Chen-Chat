@@ -292,4 +292,24 @@ dialog[open]::backdrop{animation:none}
 }
 
 /* The opacity control changes the glass fill, keeping text, icons and blur intact. */
+.provider-model-trigger{display:flex;align-items:center;justify-content:space-between;width:100%;padding:16px 18px;margin:16px 0;border:1px solid var(--hairline);border-radius:18px;background:var(--solid);text-align:left;gap:12px}
+.provider-model-trigger strong,.provider-model-trigger small{display:block}.provider-model-trigger strong{font-size:14px;font-weight:550}.provider-model-trigger small{margin-top:5px;color:var(--muted);font-size:12px}
+dialog.provider-picker{position:fixed;inset:auto 0 0;width:min(100%,480px);max-width:100%;max-height:86dvh;margin:0 auto;padding:24px 22px max(20px,env(safe-area-inset-bottom));border:1px solid var(--line);border-radius:28px 28px 0 0;color:var(--ink);background:var(--solid);box-shadow:0 -12px 60px rgb(0 0 0 / .12);overflow:hidden}
+.provider-picker[open]{display:flex;flex-direction:column;gap:14px}.provider-picker::backdrop{background:rgb(18 24 38 / .32);backdrop-filter:blur(6px)}
+.provider-picker header{display:flex;align-items:center;justify-content:space-between;flex-shrink:0}.provider-picker header button{width:44px;height:44px;border-radius:50%;background:var(--bg);font-size:25px}
+.provider-eyebrow{font-size:10px;letter-spacing:.16em;color:var(--muted);margin-bottom:6px}.provider-picker h2{font-size:22px}.provider-picker .hint{line-height:1.7}.provider-picker .field{margin:0}
+.provider-picker-tools{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px;color:var(--muted)}.provider-picker-tools button{min-height:40px;color:var(--ink)}
+.provider-picker-list{overflow-y:auto;min-height:100px;max-height:42dvh;overscroll-behavior:contain;display:flex;flex-direction:column;gap:8px;padding:3px}
+.provider-picker-row{display:flex;align-items:center;gap:8px;padding:10px 12px;min-height:64px;border:1px solid var(--hairline);border-radius:16px;background:var(--bg)}
+.provider-picker-row.is-selected{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--solid))}
+.provider-picker-row label{display:flex;align-items:center;gap:12px;flex:1;min-width:0;min-height:44px;cursor:pointer}.provider-picker-row label span{font-size:13px;overflow-wrap:anywhere}
+.provider-picker-row input[type=checkbox]{flex:0 0 18px;width:18px;height:18px;margin:0}
+.provider-picker-row button{flex-shrink:0;min-height:44px;padding:8px;font-size:11px;border-radius:12px;color:var(--muted)}.provider-picker-row button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink)}
+.provider-picker footer{display:flex;justify-content:flex-end;gap:12px;flex-shrink:0;padding-top:8px}.provider-picker footer button{min-height:44px;padding:12px 20px;border-radius:16px}
+.provider-picker-empty{padding:20px 8px}.provider-picker button:focus-visible,.provider-picker input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.provider-remember{display:flex;align-items:center;gap:10px;min-height:44px;font-size:13px;color:var(--text);cursor:pointer}
+.provider-remember input[type=checkbox]{width:18px;height:18px;min-height:18px;margin:0;flex:0 0 18px}
+#provider-form button{min-height:44px}
+#provider-form [data-provider-status]{min-height:3em;overflow-wrap:anywhere}
+#provider-form input:focus-visible,#provider-form select:focus-visible,#provider-form button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .range-endpoints{margin-top:-3px;color:var(--muted);font-size:10px;font-variant-numeric:lining-nums tabular-nums}.range-help{font-size:11px;line-height:1.6;color:var(--muted)}
