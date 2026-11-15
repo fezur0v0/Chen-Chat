@@ -11,8 +11,8 @@ export function selectedModels(provider){
 }
 
 export function providerChoices(provider,current){
- const models=selectedModels({...provider,models:[...(provider.models||[]),current]});
- return models.length?models.map(id=>`<button class="model-choice" data-action="select-model" data-model="${escape(id)}"><span>${escape(id)}<small>${id===(current||provider.model)?'当前选择':id===provider.model?'默认模型':'常用模型'} · 对话尚未接入</small></span></button>`).join(''):'<p class="hint">还没有配置模型。</p>';
+ const models=selectedModels(provider);current=models.includes(current)?current:provider.model;
+ return models.length?models.map(id=>`<button class="model-choice" data-action="select-model" data-model="${escape(id)}"><span>${escape(id)}<small>${id===(current||provider.model)?'当前选择':id===provider.model?'默认模型':'常用模型'}</small></span></button>`).join(''):'<p class="hint">还没有配置模型。</p>';
 }
 
 function openModelPicker(form){
@@ -127,7 +127,7 @@ export function providerForm(provider){
  <label class="field"><span>默认模型 ID</span><input name="model" maxlength="200" value="${escape(provider.model)}" placeholder="在弹窗中指定，或手动填写" autocomplete="off"></label>
  <p class="hint">使用中转站时请选择它要求的接口类型，例如 OpenAI 兼容，而不是按模型品牌选择。</p>
  <button class="primary" type="submit">保存配置</button>
- <p class="hint">本次接入配置和模型检测；对话发送仍为本机预览。</p></form>`;
+ <p class="hint">发送对话时会向所选服务提交当前对话上下文，按服务商规则计费。可以在对话中停止等待或手动重试。</p></form>`;
 }
 
 export function bindProvider(root,{getState,persist,notify}){

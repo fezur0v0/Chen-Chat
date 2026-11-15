@@ -16,7 +16,7 @@ export function libraryEmpty(symbol,title,description,action='new',label='新建
 export function librarySwitch(action,checked,label,id='') {
  return `<button type="button" class="library-switch" role="switch" aria-checked="${checked}" aria-label="${escape(label)}" data-tool-action="${action}" data-item="${escape(id)}"><span></span></button>`;
 }
-export const libraryHint=kind=>`<p class="library-runtime-note">${kind==='worldbook'?'条目保存在本机，尚未接入对话上下文。':'预设保存在本机，尚未应用到模型请求。'}</p>`;
+export const libraryHint=kind=>`<p class="library-runtime-note">${kind==='worldbook'?'条目保存在本机，尚未接入对话上下文。':'默认预设的启用文本已应用到对话请求，支持基础编排与 {{char}} / {{user}}；其他高级能力尚未接入。'}</p>`;
 export function selectField(label,name,value,options) {
  return `<label class="field"><span>${label}</span><select name="${name}">${options.map(([key,title])=>`<option value="${escape(key)}" ${String(value)===String(key)?'selected':''}>${escape(title)}</option>`).join('')}</select></label>`;
 }

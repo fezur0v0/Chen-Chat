@@ -1,3 +1,4 @@
+@import './chat-api/style.css';
 @import './apps/style.css';
 @import './drawer.css';
 @import './components/touch-ripple.css';

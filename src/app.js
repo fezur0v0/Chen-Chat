@@ -1,3 +1,4 @@
+import {createChatGeneration} from './chat-api/controller.js';
 import {bindProvider} from './provider.js';
 import {createSidebarItemMenu} from './sidebar-menu/controller.js';
 import {createBackupManager} from './backup/controller.js';
@@ -49,14 +50,23 @@ const musicApp=createMusicApp({app,getState:()=>state,setState:value=>{state=val
 const promptLibraries=createPromptLibraries({app,getState:()=>state,setState:value=>{state=value;},persist,notify});
 const stickerLibrary=createStickerLibrary({app,getState:()=>state,setState:value=>{state=value;},getUI:()=>chatUI,persist,notify,compressImage});
 const chatMedia=createChatMedia({files:isolatedPreview?.files,app,getState:()=>state,getUI:()=>chatUI,isChat:()=>page==='chat',render,notify});
-const backupManager=createBackupManager({app,getState:()=>state,storage,media:{music:isolatedPreview?.files||musicFile,voice:isolatedPreview?.files||voiceFile},snapshots:isolatedPreview?memorySnapshots():undefined,allowAuto:!isolatedPreview,persist,notify,applyRestored,canStart:()=>!musicApp.ui.busy&&!galleryApp.ui.busy&&!chatUI.voiceBusy&&!chatUI.voiceRecording});
+const generation=createChatGeneration({getState:()=>state,setState:value=>{state=value;},persist,render:renderGeneration,enabled:!isolatedPreview});
+const backupManager=createBackupManager({app,getState:()=>state,storage,media:{music:isolatedPreview?.files||musicFile,voice:isolatedPreview?.files||voiceFile},snapshots:isolatedPreview?memorySnapshots():undefined,allowAuto:!isolatedPreview,persist,notify,applyRestored,canStart:()=>!musicApp.ui.busy&&!galleryApp.ui.busy&&!chatUI.voiceBusy&&!chatUI.voiceRecording&&!generation.isBusy()});
 const sidebarItemMenu=createSidebarItemMenu({getState:()=>state,setState:value=>{state=value;},persist,notify,onChange:({kind,id,operation,previousActive})=>{if(kind==='session'&&operation==='delete'&&previousActive===id){composeDraft='';chatUI.attachments=[];chatUI.replyTo=null;composerSession=state.active;}render();}});
 function notify(value){const n=document.querySelector('#notice');n.textContent=value;n.classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>n.classList.remove('visible'),3500);}
 function persist(){try{saveState(storage,state);return true;}catch{notify('本机存储不足或不可用。修改尚未保存，请导出备份或换一张更小的图片。');return false;}}
 function saveNotice(text){if(persist())notify(text);}
 bindProvider(app,{getState:()=>state,persist,notify});
 function applyAppearance(){const root=document.documentElement,a=state.appearance;root.dataset.theme=state.theme;root.style.setProperty('--accent',a.accent);const rgb=a.accent.slice(1).match(/../g).map(c=>parseInt(c,16));root.style.setProperty('--tint',rgb.join(' '));const luminance=rgb.map(c=>c/255).map(c=>c<=.04045?c/12.92:((c+.055)/1.055)**2.4).reduce((sum,c,i)=>sum+c*[.2126,.7152,.0722][i],0);root.style.setProperty('--accent-ink',luminance>.179?'#000000':'#ffffff');root.style.setProperty('--glass-alpha',a.opacity/100);root.style.setProperty('--glass-blur',`${a.blur}px`);root.style.setProperty('--wall-image',a.wallpaper?`url("${a.wallpaper}")`:'none');root.style.setProperty('--splash-image',a.splashWallpaper?`url("${a.splashWallpaper}")`:'none');root.dataset.wallpaper=String(Boolean(a.wallpaper));document.querySelector('meta[name=theme-color]').content=state.theme==='dark'?'#0c0d11':'#eceef3';}
+function renderGeneration(id){
+ if(page!=='chat'||state.active!==id)return;
+ const messages=app.querySelector('#messages'),top=messages?.scrollTop||0,nearBottom=!messages||messages.scrollHeight-messages.scrollTop-messages.clientHeight<80;
+ const focused=document.activeElement===app.querySelector('[name=message]');rememberSelection();render();
+ if(!nearBottom&&app.querySelector('#messages'))app.querySelector('#messages').scrollTop=top;
+ if(focused)app.querySelector('[name=message]')?.focus({preventScroll:true});
+}
 function render(){
+ generation.reconcile();chatUI.generation=generation.view(state.active);
  for(const node of app.querySelectorAll('details')){if(node.open)opened.add(node.id);else opened.delete(node.id);}
  applyAppearance();
  const desktopApp=findApp(page),utilityPage=['memory','settings'].includes(page),immersive=page!=='home';
@@ -101,13 +111,16 @@ function goto(next){if(next==='app-memory')next='memory';if(next==='chat'&&compo
 function focusSettings(id){if(id==='appearance-settings'){goto('app-appearance');return;}goto('settings');const d=document.getElementById(id);if(d){d.open=true;opened.add(id);d.scrollIntoView({behavior:'smooth',block:'start'});}}
 function showMemoryEditor(item,source=''){dialog.innerHTML=memoryEditor(item,source);dialog.showModal();dialog.querySelector('[name=title]').focus();}
 function closeModal(){dialog.close();}
-function applyRestored(next){sidebarItemMenu.reset();chatMedia.reset();stickerLibrary.reset();galleryApp.reset();musicApp.reset();state=next;composeDraft='';chatUI={tray:'',tab:'stickers',attachments:[]};memorySearch='';memoryFilter='all';opened.add('storage-settings');goto('settings');}
+function applyRestored(next){generation.reset();sidebarItemMenu.reset();chatMedia.reset();stickerLibrary.reset();galleryApp.reset();musicApp.reset();state=next;composeDraft='';chatUI={tray:'',tab:'stickers',attachments:[]};memorySearch='';memoryFilter='all';opened.add('storage-settings');goto('settings');}
 
 function validEndpoint(value){if(!value)return true;try{const u=new URL(value);return u.protocol==='https:'&&!u.username&&!u.password&&!u.search&&!u.hash;}catch{return false;}}
 function handleAction(e){
  const target=e.target.closest('button');if(!target)return;
  if(target.dataset.open){if(state.active!==target.dataset.open){composeDraft='';chatUI.attachments=[];chatUI.replyTo=null;}state.active=target.dataset.open;persist();goto('chat');return;}
  const action=target.dataset.action;
+ if(action==='generation-stop'){generation.stop(state.active);return;}
+ if(action==='generation-retry'){void generation.retry(state.active);return;}
+ if(action==='generation-copy'){const text=generation.pendingText(state.active);if(text&&navigator.clipboard?.writeText)navigator.clipboard.writeText(text).then(()=>notify('回复已复制。')).catch(()=>notify('复制失败，请先尝试重试保存。'));return;}
  if(action==='open-app'){if(findApp(target.dataset.app))goto(target.dataset.app);return;}
  if(action==='show-reasoning'){const scroll=app.querySelector('#messages').scrollTop;rememberSelection();chatUI.messageId=target.dataset.id;chatUI.tray='reasoning';render();app.querySelector('#messages').scrollTop=scroll;return;}
  if(action==='cancel-reply'){chatUI.replyTo=null;render();app.querySelector('[name=message]')?.focus({preventScroll:true});return;}
@@ -140,7 +153,7 @@ function handleAction(e){
  return;
  }
  if(action==='configure-model'){focusSettings('model-settings');return;}
- if(action==='select-model'){const session=state.sessions.find(x=>x.id===state.active);session.model=target.dataset.model;persist();chatUI.tray='';render();notify('已保存此对话的模型选择；服务尚未连接。');return;}
+ if(action==='select-model'){const session=state.sessions.find(x=>x.id===state.active);session.model=target.dataset.model;persist();chatUI.tray='';render();notify('已保存此对话的模型选择。');return;}
 
  if(nav.some(n=>n[0]===action)||['sessions','memory'].includes(action))goto(action);
  else if(action==='customize')focusSettings(target.dataset.section||'appearance-settings');
@@ -169,9 +182,8 @@ app.addEventListener('click',event=>{
 sidebarDialog.addEventListener('click',e=>{if(e.target===sidebarDialog){const r=sidebarDialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)sidebarDialog.close();}else handleAction(e);});
 app.addEventListener('submit',e=>{
  e.preventDefault();const form=e.target,data=Object.fromEntries(new FormData(form));
- if(form.getAttribute('id')==='compose'){if(chatUI.voiceBusy||chatUI.voiceRecording)return notify('请先结束录音，等待语音保存完成。');if(!data.message.trim()&&!chatUI.attachments.length)return;const snapshot=structuredClone(state);addDraftMessage(state,data.message,chatUI.attachments,chatUI.replyTo);const ok=persist();if(!ok){state=snapshot;return;}composeDraft='';selection={start:0,end:0};chatUI.attachments=[];chatUI.replyTo=null;chatUI.tray='';render();app.querySelector('[name=message]').focus();if(ok)notify('已保存本机；模型未连接，这条消息没有发送。');}
+ if(form.getAttribute('id')==='compose'){if(generation.busy(state.active))return notify('这次回复尚未结束，可以先停止生成。');if(chatUI.voiceBusy||chatUI.voiceRecording)return notify('请先结束录音，等待语音保存完成。');if(!data.message.trim()&&!chatUI.attachments.length)return;const snapshot=structuredClone(state);addDraftMessage(state,data.message,chatUI.attachments,chatUI.replyTo);const ok=persist();if(!ok){state=snapshot;return;}composeDraft='';selection={start:0,end:0};chatUI.attachments=[];chatUI.replyTo=null;chatUI.tray='';render();app.querySelector('[name=message]').focus();if(isolatedPreview)notify('这是隔离预览，消息仅保存在预览中。');else void generation.generate(state.active);}
  else if(form.getAttribute('id')==='persona-form'){if(!data.name.trim())return notify('请填写 AI 名字。');state.persona={name:data.name.trim().slice(0,40),prompt:data.prompt};saveNotice('角色已保存。');}
- else if(form.getAttribute('id')==='provider-form'){if(!validEndpoint(data.baseUrl.trim()))return notify('请使用不含密钥、查询参数或账号信息的 HTTPS 地址。');state.provider={protocol:data.protocol,baseUrl:data.baseUrl.trim(),model:data.model.trim()};saveNotice('模型配置已保存，尚未连接服务。');}
  else if(form.getAttribute('id')==='plugin-form'){if(!data.name.trim()||!data.url.trim())return notify('请填写名称和服务地址。');if(!validEndpoint(data.url.trim()))return notify('请使用不含密钥、查询参数或账号信息的 HTTPS 地址。');const p={id:data.id||crypto.randomUUID(),name:data.name.trim().slice(0,80),type:data.type,url:data.url.trim()},i=state.plugins.findIndex(x=>x.id===p.id);if(i<0)state.plugins.push(p);else state.plugins[i]=p;saveNotice('配置已保存，插件运行尚未接入。');render();}
 });
 app.addEventListener('input',e=>{

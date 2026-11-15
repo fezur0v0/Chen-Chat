@@ -35,5 +35,5 @@ test('invalid library files fail without changing state or accepting text-comple
 test('library views escape imported text, show honest empty states and retain correct prompt semantics',()=>{
  const state=createState();assert.match(worldbook(state),/世界从这里展开/);assert.match(presets(state),/从喜欢的回应开始/);assert.doesNotMatch(presets(state),/编辑当前角色设定/);
  const book=newWorldbook('<img src=x>');book.raw.entries['0']={key:['<script>'],comment:'<script>',content:'<img src=x>'};state.worldbooks=[book];assert.doesNotMatch(worldbook(state,{selected:book.id}),/<img src=x>|<script>/);assert.match(worldbook(state,{selected:book.id}),/&lt;script&gt;/);
- const preset=importPreset(imported,'<img src=x>.json');state.promptPresets=[preset];assert.doesNotMatch(presets(state,{selected:preset.id}),/<img src=x>/);assert.match(presets(state,{selected:preset.id}),/尚未加入编排/);assert.match(presets(state,{selected:preset.id}),/尚未应用到模型请求/);
+ const preset=importPreset(imported,'<img src=x>.json');state.promptPresets=[preset];assert.doesNotMatch(presets(state,{selected:preset.id}),/<img src=x>/);assert.match(presets(state,{selected:preset.id}),/尚未加入编排/);assert.match(presets(state,{selected:preset.id}),/默认预设的启用文本已应用到对话请求/);
 });
