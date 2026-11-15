@@ -14,7 +14,12 @@ Object.assign(icons, {
  close:[['path',{d:'m6 6 12 12M6 18 18 6'}]],
  more:[['circle',{cx:'5',cy:'12',r:'1'}],['circle',{cx:'12',cy:'12',r:'1'}],['circle',{cx:'19',cy:'12',r:'1'}]],
  file:[['path',{d:'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Zm0 0v6h6M8 13h8M8 17h5'}]],
- star:[['path',{d:'m12 3 2.8 5.7 6.3.9-4.5 4.4 1 6.2L12 17.3l-5.6 2.9 1-6.2L3 9.6l6.2-.9Z'}]]
+ star:[['path',{d:'m12 3 2.8 5.7 6.3.9-4.5 4.4 1 6.2L12 17.3l-5.6 2.9 1-6.2L3 9.6l6.2-.9Z'}]],
+ copy:[['rect',{width:'14',height:'14',x:'8',y:'8',rx:'2',ry:'2'}],['path',{d:'M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2'}]],
+ folder:[['path',{d:'M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z'}]],
+ 'folder-input':[['path',{d:'M2 9V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H20a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-1'}],['path',{d:'M2 13h10'}],['path',{d:'m9 16 3-3-3-3'}]],
+ 'folder-minus':[['path',{d:'M9 13h6'}],['path',{d:'M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z'}]],
+ grip:[['circle',{cx:'9',cy:'12',r:'1'}],['circle',{cx:'9',cy:'5',r:'1'}],['circle',{cx:'9',cy:'19',r:'1'}],['circle',{cx:'15',cy:'12',r:'1'}],['circle',{cx:'15',cy:'5',r:'1'}],['circle',{cx:'15',cy:'19',r:'1'}]]
 });
 export function icon(name) {
  const nodes = icons[name] || icons.chat;

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createState,normalizeState,addDraftMessage,exportData} from '../src/store.js';
-import {emptyGallery,normalizeGallery,saveAlbum,addUploadedPhotos,albumPhotos,photoGroups,movePhotos,deletePhotos,deleteAlbum,updatePhoto,saveChatPhoto} from '../src/apps/gallery/model.js';
+import {emptyGallery,normalizeGallery,saveAlbum,addUploadedPhotos,albumPhotos,photoGroups,copyPhotos,movePhotos,removeFromAlbum,reorderAlbums,deletePhotos,deleteAlbum,updatePhoto,saveChatPhoto,detachDiaryPhotoRefs,collection,GALLERY_COLLECTIONS} from '../src/apps/gallery/model.js';
 const image='data:image/png;base64,aGVsbG8=';
 const upload=(gallery,name='照片',albumId='',time=Date.now())=>addUploadedPhotos(gallery,[{data:image,name,time}],albumId)[0];
 
@@ -54,5 +54,38 @@ test('AI-saved photos retain an independent snapshot when original chats disappe
 });
 test('gallery normalization filters unsafe images and duplicate IDs and repairs stale memberships',()=>{
  const normalized=normalizeGallery({albums:[{id:'album',name:'好'},{id:'album',name:'重复'},{id:'all',name:'内置冲突'}],photos:[{id:'p',data:image,albumId:'missing'},{id:'p',data:image},{id:'evil',data:'data:image/svg+xml;base64,aGVsbG8='},{id:'remote',data:'https://example.com/a.jpg'}]});
- assert.equal(normalized.albums.length,1);assert.equal(normalized.photos.length,1);assert.equal(normalized.photos[0].albumId,'');
+ assert.equal(normalized.albums.length,1);assert.equal(normalized.photos.length,1);assert.equal(normalized.photos[0].albumId,'');assert.deepEqual(normalized.photos[0].albumIds,[]);
+});
+test('legacy album membership becomes a list and keeps the original album id',()=>{
+ const normalized=normalizeGallery({albums:[{id:'trip',name:'旅行'}],photos:[{id:'p',data:image,albumId:'trip',caption:'风'}]});
+ assert.deepEqual(normalized.photos[0].albumIds,['trip']);assert.equal(normalized.photos[0].albumId,'trip');assert.equal(normalized.photos[0].caption,'风');
+});
+test('copy adds membership without duplicating the image, move replaces it, and remove keeps the photo',()=>{
+ const state=createState(),first=saveAlbum(state.gallery,{name:'甲'}),second=saveAlbum(state.gallery,{name:'乙'});
+ const photo=upload(state.gallery,'海',first.id,1000);
+ copyPhotos(state.gallery,[photo.id],second.id);
+ assert.equal(state.gallery.photos.length,1);assert.equal(state.gallery.photos[0].data,image);
+ assert.deepEqual(photo.albumIds,[first.id,second.id]);assert.equal(photo.albumId,first.id);
+ assert.equal(albumPhotos(state.gallery,first.id).length,1);assert.equal(albumPhotos(state.gallery,second.id).length,1);
+ const restored=normalizeState(JSON.parse(exportData(state)));
+ assert.deepEqual(restored.gallery.photos[0].albumIds,[first.id,second.id]);assert.equal(restored.gallery.photos[0].albumId,first.id);assert.equal(restored.gallery.photos[0].data,image);
+ movePhotos(restored.gallery,[photo.id],second.id);assert.deepEqual(restored.gallery.photos[0].albumIds,[second.id]);assert.equal(restored.gallery.photos[0].albumId,second.id);assert.equal(albumPhotos(restored.gallery,first.id).length,0);
+ removeFromAlbum(restored.gallery,[photo.id],second.id);assert.deepEqual(restored.gallery.photos[0].albumIds,[]);assert.equal(restored.gallery.photos.length,1);
+ deletePhotos(restored.gallery,[photo.id]);assert.equal(restored.gallery.photos.length,0);
+});
+test('custom albums remember their order and diary photos stay in their own collection',()=>{
+ const gallery=emptyGallery(),first=saveAlbum(gallery,{name:'先'}),second=saveAlbum(gallery,{name:'后'});
+ reorderAlbums(gallery,[second.id,first.id]);assert.deepEqual(gallery.albums.map(album=>album.name),['后','先']);assert.deepEqual(gallery.albums.map(album=>album.order),[0,1]);
+ const restored=normalizeGallery(JSON.parse(JSON.stringify(gallery)));assert.deepEqual(restored.albums.map(album=>album.id),[second.id,first.id]);
+ const diary=normalizeGallery({photos:[{id:'page',data:image,origin:'diary',name:'一页'}]});
+ assert.equal(diary.photos[0].origin,'diary');assert.equal(diary.photos[0].source,null);assert.equal(albumPhotos(diary,'diary').length,1);assert.equal(albumPhotos(diary,'uploads').length,0);assert.equal(albumPhotos(diary,'chat').length,0);
+ assert.equal(collection(emptyGallery(),'diary').name,'日记');assert.equal(GALLERY_COLLECTIONS.includes('ledger'),false);
+});
+test('deleting photos clears reserved diary references and does not invent diary fields',()=>{
+ const state=createState();state.gallery=normalizeGallery({photos:[{id:'page',data:image,origin:'diary'}]});
+ state.diaryEntries=[{id:'entry',photoIds:['page','keep'],images:['page']}];
+ detachDiaryPhotoRefs(state,['page']);deletePhotos(state.gallery,['page']);
+ assert.deepEqual(state.diaryEntries[0].photoIds,['keep']);assert.deepEqual(state.diaryEntries[0].images,[]);assert.equal(state.gallery.photos.length,0);
+ const plain=createState();plain.diaryEntries=[{id:'entry',content:'没有照片'}];detachDiaryPhotoRefs(plain,['page']);
+ assert.equal(Object.hasOwn(plain.diaryEntries[0],'photoIds'),false);assert.equal(Object.hasOwn(plain.diaryEntries[0],'images'),false);
 });
