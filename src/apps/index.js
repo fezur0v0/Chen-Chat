@@ -2,6 +2,7 @@ import { APPS, findApp } from './catalog.js';
 import { appPageHeader, escape } from '../ui.js';
 import { diary } from './diary/view.js';
 import {diaryHeader} from './diary/cover/view.js';
+import {diaryOwner} from './diary/cover/model.js';
 import { music } from './music/view.js';
 import { gallery } from './gallery/view.js';
 import { presets } from './presets/view.js';
@@ -16,7 +17,7 @@ export function appView(id,state,ui) {
  const app=findApp(id);
  if(!app)return '';
  if(app.icon==='memory')return memory(state);
- if(app.icon==='diary')return `<section class="desktop-app diary-app" data-app-page="${app.id}">${diaryHeader(state,ui)}<div class="desktop-app-body">${diary(state,ui)}</div></section>`;
+ if(app.icon==='diary')return `<section class="desktop-app diary-app" data-app-page="${app.id}" data-diary-owner="${diaryOwner(ui?.owner)}" data-diary-screen="${['cover','entries','detail','compose'].includes(ui?.screen)?ui.screen:'entries'}">${diaryHeader(state,ui)}<div class="desktop-app-body">${diary(state,ui)}</div></section>`;
  if(['music','worldbook','presets','gallery'].includes(app.icon))return `<section class="desktop-app ${app.icon}-app" data-app-page="${app.id}">${views[app.icon](state,ui)}</section>`;
  if(app.icon==='ledger')return `<section class="desktop-app ledger-app" data-app-page="${app.id}">${appPageHeader(app.name)}<div class="desktop-app-body">${views.ledger()}</div></section>`;
  return `<section class="desktop-app ${app.icon}-app" data-app-page="${app.id}">${appPageHeader(app.name)}${app.icon==='diary'?'':`<p class="desktop-app-intro">${escape(app.subtitle)}</p>`}<div class="desktop-app-body">${views[app.icon](state,ui)}</div></section>`;

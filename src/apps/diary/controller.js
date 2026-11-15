@@ -1,186 +1,152 @@
-import { diary, diaryEditor, diaryMoodOptions, moodEditor } from './view.js';
+import {diary,diaryEditor,diaryMoodOptions,moodEditor} from './view.js';
 import {diaryHeader} from './cover/view.js';
 import {createDiaryCover} from './cover/controller.js';
 import {diaryOwner} from './cover/model.js';
-import { diaryDate, validDiaryDate, diaryCalendar, shiftDiaryMonth, saveDiaryEntry, saveDiaryMood, updateDiaryMood, deleteDiaryMood, MOOD_POINT_LIMIT, MOOD_STROKE_LIMIT } from './model.js';
-import { bindDrawerDismiss, animateDrawerClose } from '../../drawer.js';
-import { bindTouchRipple, touchRippleFinished } from '../../components/touch-ripple.js';
+import {diaryDate,validDiaryDate,diaryCalendar,shiftDiaryMonth,saveDiaryEntry,saveDiaryMood,updateDiaryMood,deleteDiaryMood,MOOD_POINT_LIMIT,MOOD_STROKE_LIMIT} from './model.js';
+import {bindTouchRipple,touchRippleFinished} from '../../components/touch-ripple.js';
 const motionOk=()=>!matchMedia('(prefers-reduced-motion: reduce)').matches;
 const EASE='cubic-bezier(.22,.8,.2,1)';
-export function createDiaryApp({app,getState,setState,persist,notify}) {
- const today=diaryDate(),ui={screen:'cover',owner:'self',coverSelected:'',month:today.slice(0,7),selected:today};
+
+export function createDiaryApp({app,getState,setState,persist,notify}){
+ const today=diaryDate(),ui={screen:'cover',owner:'self',entryId:'',coverSelected:'',month:today.slice(0,7),selected:today};
+ const editor=document.createElement('section');editor.className='diary-paper diary-compose';editor.setAttribute('aria-label','日记写作页');bindTouchRipple(editor);
+ let editorOpen=false,editingId='',returnScreen='entries',listScroll=0,detailScroll=0,revision=0,waitingForRipple=false;
+ let moodPane,moodState,moodReturn,writingScroll=0,press=null,suppressChip=false;
+ const scroller=()=>app.querySelector('.page-content');
+ const currentEntry=()=>getState().diaryEntries.find(item=>item.id===ui.entryId&&diaryOwner(item.owner)===ui.owner);
  const cover=createDiaryCover({app,getState,setState,persist,notify,ui,refresh,enter(owner){
-  ui.owner=owner;ui.screen='entries';ui.month=diaryDate().slice(0,7);ui.selected=diaryDate();refresh();app.querySelector('.page-content').scrollTop=0;app.querySelector('.diary-app h1')?.focus({preventScroll:true});
+  ui.owner=owner;ui.screen='entries';ui.entryId='';ui.month=diaryDate().slice(0,7);ui.selected=diaryDate();listScroll=0;refresh();scroller().scrollTop=0;focusTitle();
  }});
- const dialog=document.createElement('dialog');dialog.className='diary-editor glass app-sheet bottom-sheet';dialog.setAttribute('aria-label','日记编辑');document.body.append(dialog);
- let editingId='',returnFocus,closing=false,revision=0;
- let moodPane,moodState,moodReturn,writingScroll=0,waitingForRipple=false;
- bindTouchRipple(dialog);
- function afterRipple(button,action){
-  const finished=touchRippleFinished(button);
-  if(!finished){action();return;}
-  const current=revision;waitingForRipple=true;
-  void finished.then(()=>{
-   if(current!==revision)return;
-   waitingForRipple=false;if(dialog.open)action();
-  });
+ function focusTitle(){app.querySelector('.diary-app h1')?.focus({preventScroll:true});}
+ function sync(){
+  if(editorOpen&&ui.screen==='compose'){
+   const slot=app.querySelector('.diary-compose-slot');if(slot&&!slot.contains(editor)){slot.append(editor);moodState?.resize();}
+  }
  }
- async function close(){if(waitingForRipple)return;if(moodState){closeMood();return;}if(!dialog.open||closing)return;closing=true;const current=revision;await animateDrawerClose(dialog);if(current!==revision)return;dialog.close();closing=false;}
- bindDrawerDismiss(dialog,{panel:()=>dialog.open&&!closing?dialog:null,close,backdrop:true});
- dialog.addEventListener('cancel',event=>{event.preventDefault();void close();});
- function refresh(focusSelector) {
-  const body=app.querySelector('.diary-app .desktop-app-body');if(!body)return;
-  const scroller=app.querySelector('.page-content'),top=scroller.scrollTop;
-  body.innerHTML=diary(getState(),ui);app.querySelector('.diary-app>.app-topbar').outerHTML=diaryHeader(getState(),ui);scroller.scrollTop=top;
+ function refresh(focusSelector){
+  const root=app.querySelector('.diary-app'),body=root?.querySelector('.desktop-app-body');if(!body)return;
+  root.dataset.diaryOwner=ui.owner;root.dataset.diaryScreen=ui.screen;
+  if(editorOpen&&ui.screen==='compose'){sync();return;}
+  const top=scroller().scrollTop;
+  body.innerHTML=diary(getState(),ui);root.querySelector('.app-topbar').outerHTML=diaryHeader(getState(),ui);scroller().scrollTop=top;
   if(focusSelector)body.querySelector(focusSelector)?.focus({preventScroll:true});
  }
- function select(date,scroll=false) {
+ function afterRipple(button,action){
+  const finished=touchRippleFinished(button);if(!finished){action();return;}
+  const current=revision;waitingForRipple=true;
+  void finished.then(()=>{if(current!==revision)return;waitingForRipple=false;if(editorOpen)action();});
+ }
+ function cancelPress(){if(press)clearTimeout(press.timer);press=null;}
+ function clearEditor(){
+  revision++;cancelPress();suppressChip=false;waitingForRipple=false;moodState?.destroy();moodState=null;moodReturn=null;editorOpen=false;editor.remove();
+ }
+ function finishEditor(screen=returnScreen){
+  clearEditor();ui.screen=screen;refresh();scroller().scrollTop=screen==='entries'?listScroll:detailScroll;focusTitle();
+ }
+ function close(){if(waitingForRipple||!editorOpen)return;if(moodState){closeMood();return;}finishEditor();}
+ function open(entry){
+  returnScreen=ui.screen==='detail'?'detail':'entries';
+  if(returnScreen==='detail')detailScroll=scroller().scrollTop;else listScroll=scroller().scrollTop;
+  revision++;editingId=entry?.id||'';ui.entryId=editingId;ui.screen='compose';refresh();
+  editor.innerHTML=diaryEditor(entry,ui.selected,getState());moodPane=editor.querySelector('.diary-mood-editor');
+  const date=editor.querySelector('[name=date]');date.required=true;date.min='0001-01-01';date.max='9999-12-31';
+  editor.querySelector('[name=title]').maxLength=80;editorOpen=true;sync();scroller().scrollTop=0;focusTitle();
+ }
+ function showDetail(entry){listScroll=scroller().scrollTop;ui.entryId=entry.id;ui.screen='detail';detailScroll=0;refresh();scroller().scrollTop=0;focusTitle();}
+ function backToList(){ui.screen='entries';ui.entryId='';refresh();scroller().scrollTop=listScroll;focusTitle();}
+ function commit(change,alert){
+  const previous=structuredClone(getState());
+  try{const result=change(getState());if(!persist())throw new Error('日记尚未保存，本机存储不足或不可用。内容仍保留在这里，请备份后重试。');return result;}
+  catch(error){setState(previous);const target=alert?.isConnected?alert:editor.querySelector('[role=alert]');if(target){target.hidden=false;target.textContent=error.message;target.scrollIntoView({block:'nearest'});}return null;}
+ }
+ function select(date,scroll=false){
   if(!validDiaryDate(date))return;
   ui.selected=date;ui.month=date.slice(0,7);refresh(`[data-diary-date="${date}"]`);
   if(scroll){
-   const reducedMotion=!motionOk();
-   if(!reducedMotion)app.querySelector(`[data-diary-date="${date}"] .diary-day-number`)?.animate([
-    {transform:'scale(.93)'},{transform:'scale(1.055)',offset:.64},{transform:'scale(1)'},
-   ],{duration:230,easing:'ease-out'});
-   app.querySelector(`[data-entry-date="${date}"]`)?.scrollIntoView({block:'nearest',behavior:reducedMotion?'auto':'smooth'});
+   if(motionOk())app.querySelector(`[data-diary-date="${date}"] .diary-day-number`)?.animate([{transform:'scale(.93)'},{transform:'scale(1.055)',offset:.64},{transform:'scale(1)'}],{duration:230,easing:'ease-out'});
+   app.querySelector(`[data-entry-date="${date}"]`)?.scrollIntoView({block:'nearest',behavior:motionOk()?'smooth':'auto'});
   }
  }
- function open(entry) {
-  revision++;closing=false;dialog.style.transform='';dialog.getAnimations().forEach(animation=>animation.cancel());
-  returnFocus=document.activeElement;editingId=entry?.id||'';
-  dialog.innerHTML=diaryEditor(entry,ui.selected,getState());
-  moodPane=dialog.querySelector('.diary-mood-editor');
-  const date=dialog.querySelector('[name=date]');date.required=true;date.min='0001-01-01';date.max='9999-12-31';
-  dialog.querySelector('[name=title]').maxLength=80;
-  dialog.showModal();dialog.querySelector('[data-diary-close]').focus({preventScroll:true});
- }
- function commit(change,alert) {
-  const previous=structuredClone(getState());
-  try {
-   const result=change(getState());
-   if(!persist())throw new Error('日记尚未保存，本机存储不足或不可用。内容仍保留在这里，请备份后重试。');
-   return result;
-  } catch(error) {
-   setState(previous);const target=alert?.isConnected?alert:dialog.querySelector('[role=alert]');if(target){target.hidden=false;target.textContent=error.message;}return null;
-  }
- }
- function selectedMood(){return dialog.querySelector('.diary-mood-options input:checked')?.value||'';}
- function replaceMoodOptions(selected){
-  const options=dialog.querySelector('.diary-mood-options');if(!options)return;
-  const left=options.scrollLeft;options.innerHTML=diaryMoodOptions(getState(),selected);options.scrollLeft=left;
- }
+ function selectedMood(){return editor.querySelector('.diary-mood-options input:checked')?.value||'';}
+ function replaceMoodOptions(selected){const options=editor.querySelector('.diary-mood-options');if(!options)return;const left=options.scrollLeft;options.innerHTML=diaryMoodOptions(getState(),selected);options.scrollLeft=left;}
  function switchMoodPane(opening,focus){
-  const scroll=dialog.querySelector('.drawer-scroll'),writing=dialog.querySelector('.diary-writing');
-  const height=scroll.getBoundingClientRect().height;
-  scroll.getAnimations().forEach(animation=>animation.cancel());
-  if(opening)writingScroll=scroll.scrollTop;
+  const scroll=scroller(),writing=editor.querySelector('.diary-writing');if(opening)writingScroll=scroll.scrollTop;
   writing.hidden=opening;moodPane.hidden=!opening;
   const incoming=opening?moodPane:writing;
-  const scrollRect=scroll.getBoundingClientRect();
-  const nextHeight=scrollRect.height;
-  const offsetTop=incoming.getBoundingClientRect().top-scrollRect.top+scroll.scrollTop;
-  if(motionOk()){
-   const offset=opening?'8px':'-5px';
-   incoming.animate([{transform:'translateY('+offset+')'},{transform:'translateY(0)'}],{duration:220,easing:EASE});
-   if(Math.abs(height-nextHeight)>1)scroll.animate([{height:height+'px'},{height:nextHeight+'px'}],{duration:220,easing:EASE});
-  }
+  if(motionOk())incoming.animate([{opacity:0},{opacity:1}],{duration:180,easing:EASE});
   focus?.focus({preventScroll:true});
-  if(opening){
-   if(offsetTop<scroll.scrollTop||offsetTop>scroll.scrollTop+scroll.clientHeight-60)scroll.scrollTop=offsetTop;
-  }else scroll.scrollTop=writingScroll;
+  if(opening)incoming.scrollIntoView({block:'start',behavior:motionOk()?'smooth':'auto'});else scroll.scrollTop=writingScroll;
  }
  function closeMood(focus){
-  if(!moodState)return;
-  moodState.destroy();moodState=null;
-  const dragOffset=dialog.style.transform;dialog.style.transform='';
-  if(dragOffset&&motionOk())dialog.animate([{transform:dragOffset},{transform:'translateY(0)'}],{duration:220,easing:EASE});
-  const target=focus||(moodReturn?.isConnected?moodReturn:dialog.querySelector('[data-diary-mood-add]'));
+  if(!moodState)return;moodState.destroy();moodState=null;
+  const target=focus||(moodReturn?.isConnected?moodReturn:editor.querySelector('[data-diary-mood-add]'));
   switchMoodPane(false,target);moodPane.replaceChildren();moodReturn=null;
  }
  function openMood(name){
-  if(moodState||closing)return false;
-  const state=getState();
-  const existing=name?(state.diaryMoods||[]).find(mood=>mood.name===name):null;
+  if(moodState||!editorOpen)return false;
+  const state=getState(),existing=name?(state.diaryMoods||[]).find(mood=>mood.name===name):null;
   if(name&&!existing)return false;
   if(!existing&&(state.diaryMoods||[]).length>=12){notify('最多添加 12 个自定义心情。');return false;}
   moodReturn=document.activeElement;
-  const color=existing?.color||'#f6a5b8';
-  const legacy=existing&&!existing.strokes?.length?existing.drawing:'';
-  moodPane.innerHTML=moodEditor({name:existing?.name||'',color,legacy,editing:!!existing});
+  moodPane.innerHTML=moodEditor({name:existing?.name||'',color:existing?.color||'#f6a5b8',legacy:existing&&!existing.strokes?.length?existing.drawing:'',editing:!!existing});
   moodState=createMoodCanvas(moodPane.querySelector('form'),{strokes:existing?.strokes||[],editing:!!existing,notify});
-  switchMoodPane(true,moodPane);
-  moodState.resize();return true;
+  switchMoodPane(true,moodPane);moodState.resize();return true;
  }
- let press=null,suppressChip=false;
- function cancelPress(){if(press)clearTimeout(press.timer);press=null;}
- dialog.addEventListener('pointerdown',event=>{
+ editor.addEventListener('pointerdown',event=>{
   const chip=event.target.closest('[data-mood-custom]');if(!chip||event.button!==0)return;
-  cancelPress();suppressChip=false;
-  const checked=selectedMood();
+  cancelPress();suppressChip=false;const checked=selectedMood();
   press={name:chip.dataset.moodCustom,x:event.clientX,y:event.clientY,checked,fired:false,timer:setTimeout(()=>{if(!press)return;press.fired=openMood(press.name);suppressChip=press.fired;},500)};
  });
- dialog.addEventListener('pointermove',event=>{if(press&&Math.hypot(event.clientX-press.x,event.clientY-press.y)>8)cancelPress();});
- dialog.addEventListener('pointerup',()=>{if(press&&!press.fired)cancelPress();});
- dialog.addEventListener('pointercancel',cancelPress);
- dialog.addEventListener('contextmenu',event=>{
-  const chip=event.target.closest('[data-mood-custom]');if(!chip)return;
-  event.preventDefault();const checked=selectedMood();cancelPress();suppressChip=openMood(chip.dataset.moodCustom);if(suppressChip)press={checked,fired:true};
- });
+ editor.addEventListener('pointermove',event=>{if(press&&Math.hypot(event.clientX-press.x,event.clientY-press.y)>8)cancelPress();});
+ editor.addEventListener('pointerup',()=>{if(press&&!press.fired)cancelPress();});editor.addEventListener('pointercancel',cancelPress);
+ editor.addEventListener('contextmenu',event=>{const chip=event.target.closest('[data-mood-custom]');if(!chip)return;event.preventDefault();const checked=selectedMood();cancelPress();suppressChip=openMood(chip.dataset.moodCustom);if(suppressChip)press={checked,fired:true};});
  app.addEventListener('click',event=>{
   const button=event.target.closest('.diary-app button');if(!button)return;
+  if(button.hasAttribute('data-diary-close')){if(!editor.contains(button))close();return;}
   if(button.dataset.diaryDate){select(button.dataset.diaryDate,true);return;}
-  if(button.dataset.diaryEdit){const entry=getState().diaryEntries.find(item=>item.id===button.dataset.diaryEdit&&diaryOwner(item.owner)===ui.owner);if(entry)open(entry);return;}
+  if(button.dataset.diaryEdit){const entry=getState().diaryEntries.find(item=>item.id===button.dataset.diaryEdit&&diaryOwner(item.owner)===ui.owner);if(entry)showDetail(entry);return;}
   const action=button.dataset.diaryAction;
-  if(action==='write')open();
+  if(action==='write'&&!editorOpen)open();
+  if(action==='edit-entry'&&ui.screen==='detail'){const entry=currentEntry();if(entry)open(entry);}
+  if(action==='back-list')backToList();
   if(action==='today')select(diaryDate());
-  if(action==='previous'||action==='next') {
+  if(action==='previous'||action==='next'){
    ui.month=shiftDiaryMonth(ui.month,action==='next'?1:-1);
    const last=diaryCalendar(ui.month).filter(Boolean).at(-1),day=Math.min(Number(ui.selected.slice(-2)),Number(last.slice(-2)));
-   ui.selected=`${ui.month}-${String(day).padStart(2,'0')}`;
-   refresh(`[data-diary-action="${action}"]`);
+   ui.selected=`${ui.month}-${String(day).padStart(2,'0')}`;refresh(`[data-diary-action="${action}"]`);
   }
  });
  app.addEventListener('keydown',event=>{
+  if(!app.querySelector('.diary-app'))return;
+  if(event.key==='Escape'&&!event.defaultPrevented){if(editorOpen){event.preventDefault();close();}else if(ui.screen==='detail'){event.preventDefault();backToList();}return;}
   const button=event.target.closest('[data-diary-date]');if(!button)return;
   const date=new Date(`${button.dataset.diaryDate}T12:00:00`),offset={ArrowLeft:-1,ArrowRight:1,ArrowUp:-7,ArrowDown:7,Home:-date.getDay(),End:6-date.getDay()}[event.key];
-  if(offset===undefined||event.altKey||event.ctrlKey||event.metaKey)return;
-  event.preventDefault();date.setDate(date.getDate()+offset);select(diaryDate(date));
+  if(offset===undefined||event.altKey||event.ctrlKey||event.metaKey)return;event.preventDefault();date.setDate(date.getDate()+offset);select(diaryDate(date));
  });
- dialog.addEventListener('click',event=>{
+ editor.addEventListener('click',event=>{
   if(waitingForRipple)return;
   if(suppressChip&&event.target.closest('[data-mood-custom]')){
-   event.preventDefault();event.stopPropagation();
-   const previous=dialog.querySelector(`.diary-mood-options input[value="${CSS.escape(press?.checked||'')}"]`);
-   if(previous)previous.checked=true;
-   suppressChip=false;press=null;return;
+   event.preventDefault();event.stopPropagation();const previous=editor.querySelector(`.diary-mood-options input[value="${CSS.escape(press?.checked||'')}"]`);if(previous)previous.checked=true;suppressChip=false;press=null;return;
   }
   if(moodState&&moodPane.contains(event.target)){handleMoodClick(event);return;}
   if(event.target.closest('[data-diary-mood-add]')){openMood();return;}
-  const cancel=event.target.closest('[data-diary-close]');
-  if(cancel){afterRipple(cancel,()=>void close());return;}
-  if(event.target.closest('[data-diary-delete]')&&confirm('删除这篇日记？删除后无法恢复。')) {
+  const cancel=event.target.closest('[data-diary-close]');if(cancel){afterRipple(cancel,close);return;}
+  if(event.target.closest('[data-diary-delete]')&&confirm('删除这篇日记？删除后无法恢复。')){
    const saved=commit(state=>{state.diaryEntries=state.diaryEntries.filter(entry=>entry.id!==editingId);return true;});
-   if(saved){dialog.close();refresh('[data-diary-action=write]');notify('日记已删除。');}
+   if(saved){finishEditor('entries');notify('日记已删除。');}
   }
  },true);
- dialog.addEventListener('submit',event=>{
-  event.preventDefault();
-  if(waitingForRipple||closing)return;
+ editor.addEventListener('submit',event=>{
+  event.preventDefault();if(waitingForRipple||!editorOpen)return;
   if(event.target.id==='diary-mood-form'){saveMood(event.submitter);return;}
   if(moodState)return;
-  const entry=commit(state=>saveDiaryEntry(state,{...Object.fromEntries(new FormData(event.target)),owner:ui.owner}));
-  if(!entry)return;
-  afterRipple(event.submitter,()=>{
-   ui.month=entry.date.slice(0,7);ui.selected=entry.date;dialog.close();refresh(`[data-diary-edit="${CSS.escape(entry.id)}"]`);notify('日记已保存。');
-  });
+  const entry=commit(state=>saveDiaryEntry(state,{...Object.fromEntries(new FormData(event.target)),owner:ui.owner}));if(!entry)return;
+  afterRipple(event.submitter,()=>{ui.month=entry.date.slice(0,7);ui.selected=entry.date;ui.entryId=entry.id;detailScroll=0;finishEditor('detail');notify('日记已保存。');});
  });
- dialog.addEventListener('keydown',event=>{if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();dialog.querySelector(moodState?'#diary-mood-form':'#diary-entry-form').requestSubmit();}});
- dialog.addEventListener('close',()=>{if(dialog.open)return;cancelPress();suppressChip=false;waitingForRipple=false;moodState?.destroy();moodState=null;moodReturn=null;revision++;closing=false;dialog.style.transform='';dialog.getAnimations().forEach(animation=>animation.cancel());const target=returnFocus?.isConnected?returnFocus:app.querySelector(editingId?`[data-diary-edit="${CSS.escape(editingId)}"]`:'.diary-write');target?.focus({preventScroll:true});});
+ editor.addEventListener('keydown',event=>{if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();editor.querySelector(moodState?'#diary-mood-form':'#diary-entry-form').requestSubmit();}});
  function handleMoodClick(event){
-  const cancel=event.target.closest('[data-mood-close]');
-  if(cancel){afterRipple(cancel,()=>closeMood());return;}
-  const swatch=event.target.closest('[data-mood-color]');
-  if(swatch){moodState?.setColor(swatch.dataset.moodColor);moodState?.resetDelete();return;}
+  const cancel=event.target.closest('[data-mood-close]');if(cancel){afterRipple(cancel,()=>closeMood());return;}
+  const swatch=event.target.closest('[data-mood-color]');if(swatch){moodState?.setColor(swatch.dataset.moodColor);moodState?.resetDelete();return;}
   if(event.target.closest('[data-mood-tool="pen"]')){moodState?.setTool('pen');return;}
   if(event.target.closest('[data-mood-tool="eraser"]')){moodState?.setTool('eraser');return;}
   if(event.target.closest('[data-mood-size]')){moodState?.toggleSize();return;}
@@ -189,36 +155,20 @@ export function createDiaryApp({app,getState,setState,persist,notify}) {
   if(event.target.closest('[data-mood-clear]')){moodState?.clear();return;}
   if(event.target.closest('[data-mood-delete]')){moodState?.confirmDelete(removeMood);return;}
  }
- dialog.addEventListener('input',event=>{
-  if(!moodState||!moodPane.contains(event.target))return;
-  if(event.target.name==='mood-name')moodState?.syncSave();
-  if(event.target.type==='range')moodState?.setBrush(event.target.value);
- });
+ editor.addEventListener('input',event=>{if(!moodState||!moodPane.contains(event.target))return;if(event.target.name==='mood-name')moodState.syncSave();if(event.target.type==='range')moodState.setBrush(event.target.value);});
  function saveMood(button){
-  if(!moodState)return;
-  const alert=moodPane.querySelector('[role=alert]');alert.hidden=true;
-  const draft=moodState?.draft();if(!draft){alert.hidden=false;alert.textContent=moodState?.editing?'先画一笔，或撤销到原来的表情。':'先画一张脸吧。';return;}
-  const previousName=moodState.previousName;
-  const saved=commit(state=>previousName?updateDiaryMood(state,previousName,draft):saveDiaryMood(state,draft),alert);
-  if(!saved){alert.scrollIntoView({block:'nearest'});return;}
-  const selected=selectedMood();
-  const next=!previousName||selected===previousName?saved.name:selected;
-  replaceMoodOptions(next);
-  refresh();
-  afterRipple(button,()=>{
-   closeMood(dialog.querySelector('.diary-mood-options input:checked'));
-   notify(previousName?'心情已修改。':'心情已保存。');
-  });
+  if(!moodState)return;const alert=moodPane.querySelector('[role=alert]');alert.hidden=true;
+  const draft=moodState.draft();if(!draft){alert.hidden=false;alert.textContent=moodState.editing?'先画一笔，或撤销到原来的表情。':'先画一张脸吧。';return;}
+  const previousName=moodState.previousName,saved=commit(state=>previousName?updateDiaryMood(state,previousName,draft):saveDiaryMood(state,draft),alert);if(!saved)return;
+  const selected=selectedMood(),next=!previousName||selected===previousName?saved.name:selected;replaceMoodOptions(next);
+  afterRipple(button,()=>{closeMood(editor.querySelector('.diary-mood-options input:checked'));notify(previousName?'心情已修改。':'心情已保存。');});
  }
  function removeMood(){
-  const alert=moodPane.querySelector('[role=alert]');alert.hidden=true;
-  const name=moodState?.previousName;if(!name)return;
-  const saved=commit(state=>{deleteDiaryMood(state,name);return true;},alert);
-  if(!saved)return;
-  const selected=selectedMood()===name?'':selectedMood();
-  replaceMoodOptions(selected);refresh();closeMood();notify('心情已删除。相关日记改为不标记，主页心情回到平静。');
+  const alert=moodPane.querySelector('[role=alert]'),name=moodState?.previousName;alert.hidden=true;if(!name)return;
+  const saved=commit(state=>{deleteDiaryMood(state,name);return true;},alert);if(!saved)return;
+  replaceMoodOptions(selectedMood()===name?'':selectedMood());closeMood();notify('心情已删除。相关日记改为不标记，主页心情回到平静。');
  }
- return {ui,openHome(){cover.reset();}};
+ return {ui,sync,openHome(){clearEditor();ui.entryId='';cover.reset();}};
 }
 
 function createMoodCanvas(dialog,{strokes,editing,notify}) {

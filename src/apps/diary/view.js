@@ -1,8 +1,8 @@
 import { escape, field } from '../../ui.js';
 import {diaryCover} from './cover/view.js';
 import {diaryOwner} from './cover/model.js';
+import {normalizeDiaryCover} from './cover/model.js';
 import { icon } from '../../icons.js';
-import { drawerHeader } from '../../drawer.js';
 import { DIARY_MOODS, MOOD_FACES, diaryMoods, diaryDate, diaryCalendar, diaryMonthEntries, moodVectorSvg } from './model.js';
 const weekday=['SUN','MON','TUE','WED','THU','FRI','SAT'];
 const localDate=value=>new Date(`${value}T12:00:00`);
@@ -33,6 +33,11 @@ function moodPill(state,entry) {
 }
 export function diary(state,ui={}) {
  if(ui.screen==='cover')return diaryCover(state,ui);
+ if(ui.screen==='compose')return '<div class="diary-compose-slot"></div>';
+ if(ui.screen==='detail'){
+  const entry=state.diaryEntries.find(item=>item.id===ui.entryId&&diaryOwner(item.owner)===diaryOwner(ui.owner));
+  if(entry)return diaryDetail(state,entry);
+ }
  const today=diaryDate(),month=ui.month||today.slice(0,7),selected=ui.selected||today;
  const entries=diaryMonthEntries(state.diaryEntries.filter(entry=>diaryOwner(entry.owner)===diaryOwner(ui.owner)),month),monthDate=localDate(`${month}-01`);
  const moodColor=name=>diaryMoods(state).find(item=>item.name===name)?.color||'var(--muted)';
@@ -47,8 +52,8 @@ export function diary(state,ui={}) {
   }).join('')}</div>
  </section>
  <header class="diary-timeline-heading"><h2 lang="en">Timeline<span class="sr-only"> · 日记时间线</span></h2>${month!==today.slice(0,7)?'<button class="diary-now" data-diary-action="today" lang="en" aria-label="返回当前月份和今天">Now</button>':''}</header>
- <div class="diary-timeline">${entries.map(entry=>`<article class="diary-row" data-entry-date="${entry.date}"><time class="diary-date" datetime="${entry.date}"><strong>${Number(entry.date.slice(-2))}</strong><span>${weekday[localDate(entry.date).getDay()]}</span></time><div class="diary-track" aria-hidden="true"><i style="--mood:${moodColor(entry.mood)}"></i></div><button class="diary-entry app-panel glass ${entry.date===selected?'is-selected':''}" data-diary-edit="${escape(entry.id)}" aria-label="阅读和编辑：${escape(entry.title||entry.content.slice(0,40))}"><span class="diary-entry-meta"><time datetime="${new Date(entry.created).toISOString()}">${new Date(entry.created).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',hour12:false})}</time>${moodPill(state,entry)}</span><strong class="diary-entry-title">${escape(entry.title||entry.content.split('\n')[0].slice(0,40))}</strong><span class="diary-entry-excerpt">${escape(entry.content)}</span></button></article>`).join('')}</div>
- <button class="diary-write glass" data-diary-action="write" aria-label="写 ${selected} 的日记">${icon('edit')}<span class="sr-only">写日记</span></button>`;
+ <div class="diary-timeline">${entries.map(entry=>`<article class="diary-row" data-entry-date="${entry.date}"><time class="diary-date" datetime="${entry.date}"><strong>${Number(entry.date.slice(-2))}</strong><span>${weekday[localDate(entry.date).getDay()]}</span></time><div class="diary-track" aria-hidden="true"><i style="--mood:${moodColor(entry.mood)}"></i></div><button class="diary-entry app-panel glass ${entry.date===selected?'is-selected':''}" data-diary-edit="${escape(entry.id)}" aria-label="阅读日记：${escape(entry.title||entry.content.slice(0,40))}"><span class="diary-entry-meta"><time datetime="${new Date(entry.created).toISOString()}">${new Date(entry.created).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',hour12:false})}</time>${moodPill(state,entry)}</span><strong class="diary-entry-title">${escape(entry.title||entry.content.split('\n')[0].slice(0,40))}</strong><span class="diary-entry-excerpt">${escape(entry.content)}</span></button></article>`).join('')}</div>
+ <button class="diary-write glass" data-diary-action="write" aria-label="写 ${selected} 的日记">${icon('plus')}<span class="sr-only">写日记</span></button>`;
 }
 export function diaryMoodOptions(state,selected='') {
  const chips=diaryMoods(state).map(mood=>{
@@ -60,13 +65,19 @@ export function diaryMoodOptions(state,selected='') {
  return chips+blank+add;
 }
 export function diaryEditor(entry,date,state) {
- return `<div class="drawer-layout">${drawerHeader({title:entry?'这一天的日记':'写一篇日记',action:'close',actionAttribute:'data-diary-close'})}<div class="drawer-scroll"><form id="diary-entry-form"><p class="diary-editor-error" role="alert" hidden></p><input type="hidden" name="id" value="${escape(entry?.id||'')}">
+ return `<div class="diary-compose-layout"><div class="diary-compose-scroll"><form id="diary-entry-form"><p class="diary-editor-error" role="alert" hidden></p><input type="hidden" name="id" value="${escape(entry?.id||'')}">
  ${field('日期','date',entry?.date||date,'','date')}
  <fieldset class="diary-mood-picker"><legend>心情</legend><div class="diary-mood-options">${diaryMoodOptions(state,entry?.mood||'')}</div><p class="hint diary-mood-hint">长按自己画的心情可以修改</p></fieldset>
  <div class="diary-writing">
  ${field('标题（可选）','title',entry?.title||'','给这一天起个名字')}
  <label class="field"><span>日记</span><textarea name="content" rows="8" maxlength="12000" required placeholder="今天，有什么想留下的？">${escape(entry?.content||'')}</textarea></label>
  <footer class="diary-editor-footer">${entry?`<button type="button" class="diary-delete" data-diary-delete>${icon('trash')}<span>删除</span></button>`:'<span class="diary-local-hint">保存在本机</span>'}<button type="button" class="secondary touch-ripple-button" data-diary-close>取消</button><button type="submit" class="primary touch-ripple-button">保存</button></footer></div></form><div class="diary-mood-editor" role="region" aria-label="自定义心情" tabindex="-1" hidden></div></div></div>`;
+}
+export function diaryDetail(state,entry){
+ const owner=diaryOwner(entry.owner),profile=normalizeDiaryCover(state.diaryCover)[owner];
+ const date=localDate(entry.date).toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+ const stamp=time=>new Date(time).toLocaleString('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});
+ return `<article class="diary-paper diary-detail" aria-label="日记详情"><header class="diary-paper-heading"><span class="diary-paper-owner">${escape(profile.name||(owner==='self'?'我':'AI'))} 的日记</span><time datetime="${entry.date}">${date}</time><h2>${escape(entry.title||'无题')}</h2><div class="diary-paper-mood">${moodPill(state,entry)}</div></header><div class="diary-paper-content">${escape(entry.content)}</div><footer class="diary-paper-foot"><dl><div><dt>写于</dt><dd>${stamp(entry.created)}</dd></div>${entry.updated!==entry.created?`<div><dt>修改于</dt><dd>${stamp(entry.updated)}</dd></div>`:''}</dl><button type="button" class="diary-page-primary" data-diary-action="edit-entry">编辑这篇日记</button></footer></article>`;
 }
 export function moodEditor({name,color,legacy,editing}) {
  const swatches=(MOOD_SWATCHES.includes(color)?MOOD_SWATCHES:[color,...MOOD_SWATCHES]).map(swatch=>`<button type="button" class="diary-mood-swatch" style="--swatch:${swatch}" data-mood-color="${swatch}" aria-label="颜色 ${swatch}" aria-pressed="${swatch===color}"></button>`).join('');

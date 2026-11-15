@@ -74,7 +74,7 @@ function render(){
  if(sidebarDialog.open){const scroll=sidebarDialog.querySelector('.sidebar-conversations')?.scrollTop||0;sidebarDialog.innerHTML=sidebar(state,page);sidebarDialog.querySelector('.sidebar-conversations').scrollTop=scroll;}
  for(const id of opened){const d=document.getElementById(id);if(d)d.open=true;}
  const messages=document.querySelector('#messages');if(messages)messages.scrollTop=messages.scrollHeight;
- const input=app.querySelector('[name=message]');if(input){input.value=composeDraft;input.setSelectionRange(selection.start,selection.end);resizeComposer();}isolatedPreview?.decorate?.({app,state,ui:chatUI,render});updateViewport();syncTray();chatMedia.sync();ledgerApp.sync();
+ const input=app.querySelector('[name=message]');if(input){input.value=composeDraft;input.setSelectionRange(selection.start,selection.end);resizeComposer();}isolatedPreview?.decorate?.({app,state,ui:chatUI,render});updateViewport();syncTray();chatMedia.sync();ledgerApp.sync();diaryApp.sync();
 }
 // Keep the wallpaper, dock and scroll container mounted during desktop updates.
 function renderHome(){
