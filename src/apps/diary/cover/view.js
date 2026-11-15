@@ -15,9 +15,8 @@ export function diaryCover(state,ui={}){
    <span class="dc-dot-patch dc-material dc-material-dots" aria-hidden="true"></span><span class="dc-back-paper" aria-hidden="true"></span>
    <span class="dc-profile"><span class="dc-profile-body"><span class="dc-profile-head">${p.avatar?`<img class="dc-avatar" alt="" src="${escape(p.avatar)}">`:'<span class="dc-avatar dc-empty-avatar" aria-hidden="true"></span>'}<span class="dc-profile-title"><span class="dc-name ${p.name?'':'is-empty'}">${escape(p.name||role)}</span></span></span><span class="dc-sign">${escape(p.signature)}</span></span></span>
    <span class="dc-tape" aria-hidden="true"></span><span class="dc-bow dc-material dc-material-bow" aria-hidden="true"></span>
-   <span class="dc-portrait">${p.portrait?`<img alt="" src="${escape(p.portrait)}" draggable="false">`:`<span class="dc-empty-portrait" aria-hidden="true"><span>${icon('plus')}</span><small>立绘留白</small></span>`}</span>
+   <span class="dc-portrait">${p.portrait?`<img alt="" src="${escape(p.portrait)}" draggable="false">`:'<span class="dc-empty-portrait" aria-hidden="true">?</span>'}</span>
    <span class="dc-flower dc-material dc-material-flower" aria-hidden="true"></span><span class="dc-star dc-material dc-material-sparkle" aria-hidden="true"></span>
-   <span class="dc-caption">${selected?'再轻触，翻开日记':role}<span aria-hidden="true">↗</span></span>
    <span class="dc-fx" aria-hidden="true">${Array.from({length:4},()=>`<i class="dc-material dc-material-${owner==='self'?'flower':'sparkle'}"></i>`).join('')}</span>
   </button>`;
  }).join('')}</div></div>`;
