@@ -1,3 +1,4 @@
+@import './cover/style.css';
 .page-content.desktop-app-page:has(.diary-app){padding-left:16px;padding-right:16px;background:#f7f4ef}
 :root[data-theme=dark] .page-content.desktop-app-page:has(.diary-app){background:#1c1c1f}
 .diary-app .diary-track i{box-shadow:0 0 0 4px #f7f4ef}

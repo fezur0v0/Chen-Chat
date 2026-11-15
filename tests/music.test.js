@@ -8,7 +8,7 @@ test('old backups get an empty music library; songs, playlists and existing user
  const state=createState();delete state.music;assert.deepEqual(normalizeState(state).music,emptyMusic());
  state.music=fixture();state.home.note='保留便签';state.diaryEntries=[{id:'diary',date:'2026-10-11',title:'日记',content:'保留日记',mood:'平静',created:1,updated:1}];
  const restored=normalizeState(JSON.parse(exportData(state)));
- assert.deepEqual(restored.music,state.music);assert.equal(restored.home.note,state.home.note);assert.deepEqual(restored.diaryEntries,state.diaryEntries);assert.deepEqual(restored.home.pages,state.home.pages);
+ assert.deepEqual(restored.music,state.music);assert.equal(restored.home.note,state.home.note);assert.deepEqual(restored.diaryEntries,state.diaryEntries.map(entry=>({...entry,owner:'self'})));assert.deepEqual(restored.home.pages,state.home.pages);
  assert.ok(!exportData(state).includes('blob:'));
 });
 test('music normalization rejects corrupt structures and executable artwork, and filters stale references',()=>{

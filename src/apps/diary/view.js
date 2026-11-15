@@ -1,4 +1,6 @@
 import { escape, field } from '../../ui.js';
+import {diaryCover} from './cover/view.js';
+import {diaryOwner} from './cover/model.js';
 import { icon } from '../../icons.js';
 import { drawerHeader } from '../../drawer.js';
 import { DIARY_MOODS, MOOD_FACES, diaryMoods, diaryDate, diaryCalendar, diaryMonthEntries, moodVectorSvg } from './model.js';
@@ -30,8 +32,9 @@ function moodPill(state,entry) {
  return `<span class="diary-mood" style="--mood:${color}">${face}${escape(entry.mood||'未标记')}</span>`;
 }
 export function diary(state,ui={}) {
+ if(ui.screen==='cover')return diaryCover(state,ui);
  const today=diaryDate(),month=ui.month||today.slice(0,7),selected=ui.selected||today;
- const entries=diaryMonthEntries(state.diaryEntries,month),monthDate=localDate(`${month}-01`);
+ const entries=diaryMonthEntries(state.diaryEntries.filter(entry=>diaryOwner(entry.owner)===diaryOwner(ui.owner)),month),monthDate=localDate(`${month}-01`);
  const moodColor=name=>diaryMoods(state).find(item=>item.name===name)?.color||'var(--muted)';
  const focusDate=selected.startsWith(month)?selected:`${month}-01`;
  return `<section class="diary-calendar app-panel glass" aria-label="${Number(month.slice(0,4))}年${monthDate.getMonth()+1}月日历">

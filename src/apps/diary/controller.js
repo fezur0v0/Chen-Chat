@@ -1,11 +1,17 @@
 import { diary, diaryEditor, diaryMoodOptions, moodEditor } from './view.js';
+import {diaryHeader} from './cover/view.js';
+import {createDiaryCover} from './cover/controller.js';
+import {diaryOwner} from './cover/model.js';
 import { diaryDate, validDiaryDate, diaryCalendar, shiftDiaryMonth, saveDiaryEntry, saveDiaryMood, updateDiaryMood, deleteDiaryMood, MOOD_POINT_LIMIT, MOOD_STROKE_LIMIT } from './model.js';
 import { bindDrawerDismiss, animateDrawerClose } from '../../drawer.js';
 import { bindTouchRipple, touchRippleFinished } from '../../components/touch-ripple.js';
 const motionOk=()=>!matchMedia('(prefers-reduced-motion: reduce)').matches;
 const EASE='cubic-bezier(.22,.8,.2,1)';
 export function createDiaryApp({app,getState,setState,persist,notify}) {
- const today=diaryDate(),ui={month:today.slice(0,7),selected:today};
+ const today=diaryDate(),ui={screen:'cover',owner:'self',coverSelected:'',month:today.slice(0,7),selected:today};
+ const cover=createDiaryCover({app,getState,setState,persist,notify,ui,refresh,enter(owner){
+  ui.owner=owner;ui.screen='entries';ui.month=diaryDate().slice(0,7);ui.selected=diaryDate();refresh();app.querySelector('.page-content').scrollTop=0;app.querySelector('.diary-app h1')?.focus({preventScroll:true});
+ }});
  const dialog=document.createElement('dialog');dialog.className='diary-editor glass app-sheet bottom-sheet';dialog.setAttribute('aria-label','日记编辑');document.body.append(dialog);
  let editingId='',returnFocus,closing=false,revision=0;
  let moodPane,moodState,moodReturn,writingScroll=0,waitingForRipple=false;
@@ -25,7 +31,7 @@ export function createDiaryApp({app,getState,setState,persist,notify}) {
  function refresh(focusSelector) {
   const body=app.querySelector('.diary-app .desktop-app-body');if(!body)return;
   const scroller=app.querySelector('.page-content'),top=scroller.scrollTop;
-  body.innerHTML=diary(getState(),ui);scroller.scrollTop=top;
+  body.innerHTML=diary(getState(),ui);app.querySelector('.diary-app>.app-topbar').outerHTML=diaryHeader(getState(),ui);scroller.scrollTop=top;
   if(focusSelector)body.querySelector(focusSelector)?.focus({preventScroll:true});
  }
  function select(date,scroll=false) {
@@ -123,7 +129,7 @@ export function createDiaryApp({app,getState,setState,persist,notify}) {
  app.addEventListener('click',event=>{
   const button=event.target.closest('.diary-app button');if(!button)return;
   if(button.dataset.diaryDate){select(button.dataset.diaryDate,true);return;}
-  if(button.dataset.diaryEdit){const entry=getState().diaryEntries.find(item=>item.id===button.dataset.diaryEdit);if(entry)open(entry);return;}
+  if(button.dataset.diaryEdit){const entry=getState().diaryEntries.find(item=>item.id===button.dataset.diaryEdit&&diaryOwner(item.owner)===ui.owner);if(entry)open(entry);return;}
   const action=button.dataset.diaryAction;
   if(action==='write')open();
   if(action==='today')select(diaryDate());
@@ -162,7 +168,7 @@ export function createDiaryApp({app,getState,setState,persist,notify}) {
   if(waitingForRipple||closing)return;
   if(event.target.id==='diary-mood-form'){saveMood(event.submitter);return;}
   if(moodState)return;
-  const entry=commit(state=>saveDiaryEntry(state,Object.fromEntries(new FormData(event.target))));
+  const entry=commit(state=>saveDiaryEntry(state,{...Object.fromEntries(new FormData(event.target)),owner:ui.owner}));
   if(!entry)return;
   afterRipple(event.submitter,()=>{
    ui.month=entry.date.slice(0,7);ui.selected=entry.date;dialog.close();refresh(`[data-diary-edit="${CSS.escape(entry.id)}"]`);notify('日记已保存。');
@@ -212,7 +218,7 @@ export function createDiaryApp({app,getState,setState,persist,notify}) {
   const selected=selectedMood()===name?'':selectedMood();
   replaceMoodOptions(selected);refresh();closeMood();notify('心情已删除。相关日记改为不标记，主页心情回到平静。');
  }
- return {ui};
+ return {ui,openHome(){cover.reset();}};
 }
 
 function createMoodCanvas(dialog,{strokes,editing,notify}) {
