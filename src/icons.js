@@ -24,6 +24,7 @@ Object.assign(icons, {
  'folder-plus':[['path',{d:'M12 10v6'}],['path',{d:'M9 13h6'}],['path',{d:'M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z'}]]
 });
 Object.assign(icons,{'undo-2':[['path',{d:'M9 14 4 9l5-5'}],['path',{d:'M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11'}]],'redo-2':[['path',{d:'m15 14 5-5-5-5'}],['path',{d:'M20 9H9.5A5.5 5.5 0 0 0 4 14.5A5.5 5.5 0 0 0 9.5 20H13'}]]});
+Object.assign(icons,{list:[['path',{d:'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01'}]],quote:[['path',{d:'M3 21c3 0 7-1 7-9V5H3v7h7M14 21c3 0 7-1 7-9V5h-7v7h7'}]],separator:[['path',{d:'M3 12h18'}]]});
 export function icon(name) {
  const nodes = icons[name] || icons.chat;
  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+nodes.map(([tag,attrs])=>'<'+tag+' '+Object.entries(attrs).filter(([k])=>k!=='key').map(([k,v])=>k+'="'+v+'"').join(' ')+'/>').join('')+'</svg>';

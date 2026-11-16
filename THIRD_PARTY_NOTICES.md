@@ -175,3 +175,8 @@ webfont distributed by Adobe under the SIL Open Font License 1.1.
 The license is bundled in `assets/fonts/SourceHanSans-OFL.txt`.
 
 Source: https://github.com/adobe-fonts/source-han-sans/releases/tag/2.005R
+
+
+## Tiptap / ProseMirror
+
+The diary rich-text editor bundles Tiptap 3.31.3, ProseMirror and their runtime dependencies (MIT). Full package versions and license texts: `src/vendor/editor-LICENSES.txt`. Source and locked build instructions: `scripts/vendor-editor/`.
