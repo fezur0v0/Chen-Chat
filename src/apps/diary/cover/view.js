@@ -7,9 +7,9 @@ export function diaryHeader(state,ui={}){
  const owner=diaryOwner(ui.owner),cover=ui.screen==='cover',profile=normalizeDiaryCover(state.diaryCover)[owner];
  if(ui.moodEditing)return `<header class="desktop-app-header app-topbar diary-mood-topbar">${backButton('mood-back','返回日记',{actionAttribute:'data-diary-action'})}<h1 tabindex="-1">画心情</h1><button type="submit" form="diary-mood-form" data-note-mood-save aria-label="保存心情">${icon('check')}</button></header>`;
  const back=cover?backButton('home','返回桌面'):ui.screen==='compose'?backButton('close','返回日记',{actionAttribute:'data-diary-close'}):ui.screen==='detail'?backButton('back-list','返回日记列表',{actionAttribute:'data-diary-action'}):backButton('back','返回日记封面',{actionAttribute:'data-diary-cover-action'});
- const title=cover?'日记':ui.screen==='compose'?(ui.entryId?'编辑日记':'写日记'):profile.name||diaryRole(owner);
+ const title=cover?'日记':ui.screen==='compose'?'':profile.name||diaryRole(owner);
  const tools=ui.screen==='compose'?`<div class="diary-note-actions"><button type="button" data-diary-action="undo" aria-label="撤销" disabled>${icon('undo-2')}</button><button type="button" data-diary-action="redo" aria-label="重做" disabled>${icon('redo-2')}</button><button type="submit" form="diary-entry-form" data-note-save aria-label="保存日记">${icon('check')}</button></div>`:ui.screen==='detail'?`<button type="button" data-diary-action="edit-entry" aria-label="编辑日记">${icon('edit')}</button>`:'<span aria-hidden="true"></span>';
- return `<header class="desktop-app-header app-topbar">${back}<h1 tabindex="-1">${escape(title)}</h1>${cover?'<button type="button" class="dc-config" data-diary-cover-action="edit" aria-label="编辑日记封面"><span class="dc-config-star dc-material dc-material-sparkle" aria-hidden="true"></span></button>':tools}</header>`;
+ return `<header class="desktop-app-header app-topbar">${back}<h1 tabindex="-1" aria-label="${ui.screen==='compose'?'日记编辑':escape(title)}">${escape(title)}</h1>${cover?'<button type="button" class="dc-config" data-diary-cover-action="edit" aria-label="编辑日记封面"><span class="dc-config-star dc-material dc-material-sparkle" aria-hidden="true"></span></button>':tools}</header>`;
 }
 export function diaryCover(state,ui={}){
  const profiles=normalizeDiaryCover(state.diaryCover);

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {normalizeRichText,richPlain,renderRichText,plainDocument,richField} from '../src/apps/diary/rich-text.js';
+import {normalizeRichText,richPlain,renderRichText,plainDocument,richField,NOTE_SIZES,NOTE_COLORS,NOTE_HIGHLIGHT} from '../src/apps/diary/rich-text.js';
 import {createState,normalizeState,exportData} from '../src/store.js';
 import {saveDiaryEntry} from '../src/apps/diary/model.js';
 
@@ -31,4 +31,19 @@ test('formatting documents have depth, text and node bounds and legacy plain tex
 test('lists, headings, quotes and alignment restore as bounded semantic tags',()=>{
  const doc={type:'doc',content:[{type:'orderedList',attrs:{start:2},content:[{type:'listItem',content:[{type:'paragraph',content:[{type:'text',text:'清单'}]}]}]},{type:'blockquote',content:[{type:'heading',attrs:{level:3,textAlign:'right'},content:[{type:'text',text:'引用',marks:[{type:'italic'},{type:'strike'}]}]}]}]};
  const html=renderRichText(doc);assert.match(html,/<ol start="2">/);assert.match(html,/<li><p>清单/);assert.match(html,/<blockquote><h3 class="diary-align-right">/);assert.match(html,/<s><em>引用/);
+});
+
+test('chosen font sizes, colours and highlight survive safe normalization and backup',()=>{
+ const state=createState(),doc={type:'doc',content:[{type:'paragraph',content:[{type:'text',text:'有颜色的文字',marks:[{type:'textStyle',attrs:{fontSize:36,color:NOTE_COLORS[1]}},{type:'highlight'}]}]}]};
+ const entry=saveDiaryEntry(state,{date:'2026-11-16',content:richPlain(doc),richText:doc});
+ const html=renderRichText(entry.richText);assert.match(html,/font-size:36px/);assert.match(html,/color:#e5484d/);assert.match(html,/diary-highlight/);
+ assert.deepEqual(normalizeState(JSON.parse(exportData(state))).diaryEntries[0],entry);
+ assert.deepEqual(NOTE_SIZES,[16,18,20,24,36,48,64,72]);assert.equal(entry.richText.content[0].content[0].marks[1].attrs.color,NOTE_HIGHLIGHT);
+});
+
+test('font formatting rejects CSS injection, arbitrary colours and excessive sizes while retaining text',()=>{
+ const doc={type:'doc',content:[{type:'paragraph',content:[{type:'text',text:'安全文字',marks:[{type:'textStyle',attrs:{fontSize:'36;position:fixed',color:'url(https://example.invalid/tracker)',backgroundImage:'bad'}},{type:'highlight',attrs:{color:'red;display:none'}}]}]}]};
+ const html=renderRichText(doc);assert.match(html,/安全文字/);assert.doesNotMatch(html,/style=|https:|position:|display:|backgroundImage|<mark/);
+ doc.content[0].content[0].marks=[{type:'textStyle',attrs:{fontSize:72,color:'rgb(39, 58, 139)',onclick:'bad'}}];
+ const clean=normalizeRichText(doc);assert.deepEqual(clean.content[0].content[0].marks,[{type:'textStyle',attrs:{fontSize:72,color:'#273a8b'}}]);
 });

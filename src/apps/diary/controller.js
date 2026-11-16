@@ -12,7 +12,7 @@ const EASE='cubic-bezier(.22,.8,.2,1)';
 export function createDiaryApp({app,getState,setState,persist,notify,compressImage}){
  const today=diaryDate(),ui={screen:'cover',owner:'self',entryId:'',coverSelected:'',month:today.slice(0,7),selected:today};
  const editor=document.createElement('section');editor.className='diary-paper diary-compose';editor.setAttribute('aria-label','日记写作页');bindTouchRipple(editor);
- let noteRich=null;
+ let noteRich=null,formatPaneOpen=false;
  let photos=[],textSize=16,noteHistory=[],noteCursor=0,initialNote='',uploading=false;
  let editorOpen=false,editingId='',returnScreen='entries',listScroll=0,detailScroll=0,revision=0,waitingForRipple=false;
  let moodPane,moodState,moodReturn,writingScroll=0,press=null,suppressChip=false;
@@ -43,7 +43,7 @@ export function createDiaryApp({app,getState,setState,persist,notify,compressIma
  }
  function cancelPress(){if(press)clearTimeout(press.timer);press=null;}
  function clearEditor(){
-  editor.querySelector('.diary-note-picker')?.close();editor.querySelector('.diary-photo-dialog')?.close();noteRich?.destroy();noteRich=null;ui.moodEditing=false;revision++;cancelPress();suppressChip=false;waitingForRipple=false;moodState?.destroy();moodState=null;moodReturn=null;editorOpen=false;editor.remove();
+  editor.querySelector('.diary-note-picker')?.close();editor.querySelector('.diary-photo-dialog')?.close();noteRich?.destroy();noteRich=null;formatPaneOpen=false;ui.moodEditing=false;revision++;cancelPress();suppressChip=false;waitingForRipple=false;moodState?.destroy();moodState=null;moodReturn=null;editorOpen=false;editor.remove();
  }
  function finishEditor(screen=returnScreen){
   clearEditor();ui.screen=screen;refresh();scroller().scrollTop=screen==='entries'?listScroll:detailScroll;focusTitle();
@@ -52,8 +52,8 @@ export function createDiaryApp({app,getState,setState,persist,notify,compressIma
  function open(entry){
   returnScreen=ui.screen==='detail'?'detail':'entries';
   if(returnScreen==='detail')detailScroll=scroller().scrollTop;else listScroll=scroller().scrollTop;
-  revision++;editingId=entry?.id||'';ui.entryId=editingId;ui.screen='compose';refresh();
-  editor.innerHTML=diaryEditor(entry,ui.selected,getState());moodPane=editor.querySelector('.diary-mood-editor');
+  revision++;editingId=entry?.id||'';ui.entryId=editingId;ui.screen='compose';formatPaneOpen=false;refresh();
+  editor.innerHTML=diaryEditor(entry,ui.selected,getState(),ui.owner);moodPane=editor.querySelector('.diary-mood-editor');
   const date=editor.querySelector('[name=date]');date.required=true;date.min='0001-01-01';date.max='9999-12-31';
   photos=[...(entry?.photos||[])];textSize=entry?.textSize||16;noteRich=createRichEditor(editor.querySelector('.diary-rich-host'),{content:entry?.content||'',richText:entry?.richText,onChange:recordNote,onSelection:syncFormat,onLimit:()=>notify('日记最多保存 12000 字，请精简后继续。'),onUndo:restoreNote});uploading=false;noteHistory=[];noteCursor=0;editor.querySelector('[name=title]').maxLength=80;editorOpen=true;initialNote=readNote();noteHistory=[readNote()];renderPhotos();sync();scroller().scrollTop=0;focusTitle();
  }
@@ -89,7 +89,7 @@ export function createDiaryApp({app,getState,setState,persist,notify,compressIma
  }
  function openMood(name){
   if(moodState||!editorOpen)return false;
-  editor.querySelector('.diary-note-picker').close();
+  editor.querySelector('.diary-note-picker').close();setFormatPane(false);noteRich?.blur();
   const state=getState(),existing=name?(state.diaryMoods||[]).find(mood=>mood.name===name):null;
   if(name&&!existing)return false;
   if(!existing&&(state.diaryMoods||[]).length>=12){notify('最多添加 12 个自定义心情。');return false;}
@@ -162,29 +162,35 @@ export function createDiaryApp({app,getState,setState,persist,notify,compressIma
  function updateNote(){
   if(!editorOpen)return;
   const content=editor.querySelector('[name=content]');content.value=noteRich?.text()||'';editor.style.setProperty('--note-size',textSize+'px');
-  editor.querySelector('[data-note-count]').textContent=[...content.value].length+' 字';
-  editor.querySelector('[data-note-mood]').innerHTML=diaryMoodButton(getState(),selectedMood());
+  editor.querySelector('[data-note-mood]').innerHTML=diaryMoodButton(getState(),selectedMood(),ui.owner);
   editor.querySelector('[data-note-mood]').setAttribute('aria-label','选择心情：'+(selectedMood()||'未选择'));
   for(const [action,disabled]of [['undo',noteCursor<=0],['redo',noteCursor>=noteHistory.length-1]]){const b=app.querySelector(`[data-diary-action=${action}]`);if(b)b.disabled=disabled||!!moodState||uploading;}
   const save=app.querySelector('[data-note-save]');if(save)save.disabled=!!moodState||uploading||waitingForRipple;
   syncFormat();
  }
- function syncFormat(){editor.querySelectorAll('[data-note-format]').forEach(b=>b.setAttribute('aria-pressed',String(noteRich?.active(b.dataset.noteFormat)||false)));}
+ function syncFormat(){editor.querySelectorAll('[data-note-format]').forEach(b=>b.setAttribute('aria-pressed',String(noteRich?.active(b.dataset.noteFormat)||false)));const style=noteRich?.styles()||{};editor.querySelectorAll('[data-note-font-size]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.noteFontSize)===(style.fontSize||textSize))));editor.querySelectorAll('[data-note-font-color]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.noteFontColor===(style.color||'default'))));}
+ function setFormatPane(opening){formatPaneOpen=opening;const pane=editor.querySelector('.diary-format-panel');if(pane)pane.hidden=!opening;editor.querySelector('[data-note-aa]')?.setAttribute('aria-expanded',String(opening));if(opening){noteRich?.blur();syncFormat();}}
+ editor.addEventListener('focusin',e=>{if(e.target.closest('.diary-rich-editor,[name=title],[name=date]'))setFormatPane(false);});
+
  function photoGallery(editing){return photos.map((src,i)=>`<figure><img src="${src}" alt="日记照片 ${i+1}">${editing?`<button type="button" data-note-remove="${i}" aria-label="移除第 ${i+1} 张图片">移除</button>`:''}</figure>`).join('');}
  function renderPhotos(){editor.querySelector('.diary-note-photos').innerHTML=diaryPhotoStrip(photos,true);editor.querySelector('.diary-photo-gallery').innerHTML=photoGallery(true);}
  const readerPhotos=document.createElement('dialog');readerPhotos.className='diary-photo-dialog';readerPhotos.setAttribute('aria-label','日记图片');document.body.append(readerPhotos);
  function showReaderPhotos(){const entry=currentEntry();if(!entry)return;readerPhotos.innerHTML='<div class="diary-note-picker-head"><span>日记图片</span><button type="button" aria-label="关闭图片">×</button></div><div class="diary-photo-gallery">'+(entry.photos||[]).map((src,i)=>`<figure><img src="${src}" alt="日记照片 ${i+1}"></figure>`).join('')+'</div>';readerPhotos.querySelector('button').onclick=()=>readerPhotos.close();readerPhotos.showModal();}
  readerPhotos.addEventListener('click',e=>{if(e.target!==readerPhotos)return;const r=readerPhotos.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)readerPhotos.close();});
  editor.addEventListener('click',e=>{const dialog=e.target;if(!dialog.matches?.('.diary-note-picker,.diary-photo-dialog'))return;const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dialog.close();});
- editor.addEventListener('mousedown',e=>{if(e.target.closest('[data-note-format]'))e.preventDefault();});
+ editor.addEventListener('mousedown',e=>{if(e.target.closest('[data-note-format],[data-note-aa],[data-note-font-size],[data-note-font-color],[data-note-format-close]'))e.preventDefault();});
  function recordNote(){if(!editorOpen)return;const next=readNote();if(!sameNote(next,noteHistory[noteCursor])){noteHistory.splice(noteCursor+1);noteHistory.push(next);if(noteHistory.length>100)noteHistory.shift();noteCursor=noteHistory.length-1;}updateNote();}
  function restoreNote(step){if(!editorOpen||moodState||uploading)return;const next=noteCursor+step;if(next<0||next>=noteHistory.length)return;noteCursor=next;const value=noteHistory[next];for(const name of ['title','date'])editor.querySelector(`[name=${name}]`).value=value[name];noteRich.set(value.richText||plainDocument(value.content));replaceMoodOptions(value.mood);photos=[...value.photos];textSize=value.textSize;renderPhotos();updateNote();}
  function noteClick(event){
   const b=event.target.closest('button');if(!b)return false;
   if(b.hasAttribute('data-note-mood')){editor.querySelector('.diary-note-picker').showModal();return true;}
   if(b.hasAttribute('data-note-picker-close')){editor.querySelector('.diary-note-picker').close();return true;}
-  if(b.hasAttribute('data-note-image')){if(!uploading)editor.querySelector('[data-note-upload]').click();return true;}
-  if(b.hasAttribute('data-note-format')){noteRich?.format(b.dataset.noteFormat);syncFormat();return true;}
+  if(b.hasAttribute('data-note-aa')){const opening=!formatPaneOpen;setFormatPane(opening);if(!opening)noteRich?.focus();return true;}
+  if(b.hasAttribute('data-note-format-close')){setFormatPane(false);return true;}
+  if(b.hasAttribute('data-note-font-size')){noteRich?.setSize(Number(b.dataset.noteFontSize));syncFormat();return true;}
+  if(b.hasAttribute('data-note-font-color')){noteRich?.setColor(b.dataset.noteFontColor);syncFormat();return true;}
+  if(b.hasAttribute('data-note-image')){setFormatPane(false);if(!uploading)editor.querySelector('[data-note-upload]').click();return true;}
+  if(b.hasAttribute('data-note-format')){noteRich?.format(b.dataset.noteFormat,{focus:!formatPaneOpen});syncFormat();return true;}
   if(b.hasAttribute('data-note-photos')){editor.querySelector('.diary-photo-dialog').showModal();return true;}
   if(b.hasAttribute('data-note-photos-close')){editor.querySelector('.diary-photo-dialog').close();return true;}
   if(b.hasAttribute('data-note-remove')){photos.splice(Number(b.dataset.noteRemove),1);renderPhotos();recordNote();return true;}

@@ -1,5 +1,28 @@
 // A small, bounded document format. Never trust imported HTML or editor attributes.
 const marks=new Set(['bold','italic','underline','strike']);
+export const NOTE_SIZES=[16,18,20,24,36,48,64,72];
+export const NOTE_COLORS=['#3e3e3e','#e5484d','#f28c28','#d9a400','#2e9b61','#2ba9d4','#273a8b'];
+export const NOTE_HIGHLIGHT='#f6e38a';
+export const noteSize=value=>NOTE_SIZES.includes(Number(value))?Number(value):null;
+export function noteColor(value){
+ let color=typeof value==='string'?value.trim().toLowerCase():'';
+ const rgb=/^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/.exec(color);
+ if(rgb)color='#'+rgb.slice(1).map(v=>Number(v).toString(16).padStart(2,'0')).join('');
+ return NOTE_COLORS.includes(color)?color:null;
+}
+function cleanMarks(values){
+ const result=[],seen=new Set();
+ for(const m of values.slice(0,16)){
+  if(!m||seen.has(m.type))continue;
+  if(marks.has(m.type))result.push({type:m.type});
+  else if(m.type==='textStyle'){
+   const fontSize=noteSize(m.attrs?.fontSize),color=noteColor(m.attrs?.color),attrs={...(fontSize?{fontSize}:{}),...(color?{color}:{})};
+   if(Object.keys(attrs).length)result.push({type:'textStyle',attrs});
+  }else if(m.type==='highlight'&&(!m.attrs?.color||m.attrs.color===NOTE_HIGHLIGHT))result.push({type:'highlight',attrs:{color:NOTE_HIGHLIGHT}});
+  seen.add(m.type);
+ }
+ return result;
+}
 const blocks=new Set(['paragraph','heading','blockquote','bulletList','orderedList','listItem','horizontalRule','hardBreak']);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function normalizeRichText(value){
@@ -10,7 +33,7 @@ export function normalizeRichText(value){
   if(v.type==='text'){
    if(typeof v.text!=='string'||!v.text)return null;chars+=v.text.length;if(chars>12000){invalid=true;return null;}
    const clean={type:'text',text:v.text};
-   if(Array.isArray(v.marks)){const chosen=[...new Set(v.marks.slice(0,16).filter(m=>marks.has(m?.type)).map(m=>m.type))];if(chosen.length)clean.marks=chosen.map(type=>({type}));}
+   if(Array.isArray(v.marks)){const chosen=cleanMarks(v.marks);if(chosen.length)clean.marks=chosen;}
    return clean;
   }
   if(!blocks.has(v.type))return null;
@@ -38,7 +61,7 @@ export function richField(value,content){const doc=normalizeRichText(value);retu
 export function renderRichText(value){
  const doc=normalizeRichText(value);if(!doc)return '';
  function render(n){
-  if(n.type==='text'){let html=esc(n.text);for(const mark of n.marks||[]){const tag={bold:'strong',italic:'em',underline:'u',strike:'s'}[mark.type];html=`<${tag}>${html}</${tag}>`;}return html;}
+  if(n.type==='text'){let html=esc(n.text);for(const mark of n.marks||[]){if(mark.type==='textStyle'){const style=[mark.attrs.fontSize?`font-size:${mark.attrs.fontSize}px`:'',mark.attrs.color?`color:${mark.attrs.color}`:''].filter(Boolean).join(';');html=`<span style="${style}">${html}</span>`;}else if(mark.type==='highlight')html=`<mark class="diary-highlight">${html}</mark>`;else{const tag={bold:'strong',italic:'em',underline:'u',strike:'s'}[mark.type];html=`<${tag}>${html}</${tag}>`;}}return html;}
   if(n.type==='hardBreak')return '<br>';
   if(n.type==='horizontalRule')return '<hr>';
   const tag={doc:'div',paragraph:'p',heading:n.attrs?.level===3?'h3':'h2',blockquote:'blockquote',bulletList:'ul',orderedList:'ol',listItem:'li'}[n.type];
