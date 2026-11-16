@@ -1,5 +1,6 @@
 @import './chat-api/style.css';
 @import './apps/style.css';
+@import './apps/diary/note.css';
 @import './drawer.css';
 @import './components/touch-ripple.css';
 @import './navigation.css';

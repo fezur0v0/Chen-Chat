@@ -43,3 +43,6 @@ backButton() 与 drawerHeader() 可通过内部 actionAttribute 选择组件事�
 moom 的独立全屏入口、场景控制器与本机数据在 `moom/`，详见 [moom 初版](../../docs/MOOM.md)。记忆的桌面入口 `app-memory` 跳转已有 memory 路由；moom 与外观都为 Dock-only，分别位于第二、第三个快捷位。
 
 moom 的导航例外：页头左侧使用 `sidebarButton()`，没有返回箭头。与聊天复用 `.app-sidebar` 及 `sidebarHeader()` / `sidebarNavigation()`；聊天侧栏第一项进入 moom，moom 侧栏第一项进入对话。预览必须与正式入口共用渲染和 CSS，不创建独立演示布局。
+
+
+日记便签编辑已更新：顶部撤销／重做／保存、标题旁心情弹窗、底部散开工具栏，以及可随备份恢复的照片和字号。详情和数据边界见 diary/README.md。

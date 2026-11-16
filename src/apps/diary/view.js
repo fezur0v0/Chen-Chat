@@ -64,20 +64,26 @@ export function diaryMoodOptions(state,selected='') {
  const add=`<button type="button" class="diary-mood-chip diary-mood-add" data-diary-mood-add aria-label="新的心情"><span class="diary-mood-face">${icon('plus')}</span><span class="diary-mood-name">&nbsp;</span></button>`;
  return chips+blank+add;
 }
+export function diaryMoodButton(state,name=''){
+ const mood=diaryMoods(state).find(m=>m.name===name);
+ return mood?`<span class="diary-mood-face" style="--mood:${mood.color}">${renderMoodGraphic(mood,'note')}</span>`:'<img class="diary-unset-mood" src="assets/diary-unset-mood.svg" alt="">';
+}
 export function diaryEditor(entry,date,state) {
- return `<div class="diary-compose-layout"><div class="diary-compose-scroll"><form id="diary-entry-form"><p class="diary-editor-error" role="alert" hidden></p><input type="hidden" name="id" value="${escape(entry?.id||'')}">
- ${field('日期','date',entry?.date||date,'','date')}
- <fieldset class="diary-mood-picker"><legend>心情</legend><div class="diary-mood-options">${diaryMoodOptions(state,entry?.mood||'')}</div><p class="hint diary-mood-hint">长按自己画的心情可以修改</p></fieldset>
- <div class="diary-writing">
- ${field('标题（可选）','title',entry?.title||'','给这一天起个名字')}
- <label class="field"><span>日记</span><textarea name="content" rows="8" maxlength="12000" required placeholder="今天，有什么想留下的？">${escape(entry?.content||'')}</textarea></label>
- <footer class="diary-editor-footer">${entry?`<button type="button" class="diary-delete" data-diary-delete>${icon('trash')}<span>删除</span></button>`:'<span class="diary-local-hint">保存在本机</span>'}<button type="button" class="secondary touch-ripple-button" data-diary-close>取消</button><button type="submit" class="primary touch-ripple-button">保存</button></footer></div></form><div class="diary-mood-editor" role="region" aria-label="自定义心情" tabindex="-1" hidden></div></div></div>`;
+ return `<div class="diary-compose-layout"><form id="diary-entry-form"><p class="diary-editor-error" role="alert" hidden></p><input type="hidden" name="id" value="${escape(entry?.id||'')}">
+ <div class="diary-writing"><div class="diary-note-title"><input name="title" aria-label="日记标题（可选）" placeholder="标题" maxlength="80" value="${escape(entry?.title||'')}"><button type="button" class="diary-note-mood" data-note-mood aria-label="选择心情" aria-haspopup="dialog">${diaryMoodButton(state,entry?.mood)}</button></div>
+ <div class="diary-note-meta"><input type="date" name="date" aria-label="日期" value="${escape(entry?.date||date)}"><span data-note-count>0 字</span></div>
+ <label class="field diary-note-body"><span class="sr-only">日记</span><textarea name="content" rows="12" maxlength="12000" required placeholder="今天，有什么想留下的？">${escape(entry?.content||'')}</textarea></label><div class="diary-note-photos"></div></div>
+ <dialog class="app-sheet bottom-sheet diary-note-picker" aria-label="选择心情"><div class="diary-note-picker-head"><span>今天的心情</span><button type="button" data-note-picker-close aria-label="关闭心情选择">${icon('close')}</button></div><fieldset class="diary-mood-picker"><legend class="sr-only">心情</legend><div class="diary-mood-options">${diaryMoodOptions(state,entry?.mood||'')}</div><p class="hint diary-mood-hint">长按自己画的心情可以修改</p></fieldset></dialog></form>
+ <div class="diary-mood-editor" role="region" aria-label="自定义心情" tabindex="-1" hidden></div>
+ <nav class="diary-note-toolbar" aria-label="日记工具"><button type="button" data-note-image aria-label="添加图片">${icon('image')}</button><button type="button" data-note-type aria-label="调整文字大小">Aa</button><button type="button" data-note-more aria-label="更多日记操作">${icon('more')}</button></nav><input type="file" accept="image/jpeg,image/png,image/webp" multiple data-note-upload hidden>
+ <div class="diary-note-tools" hidden><span>文字大小</span>${[16,18,20].map(n=>`<button type="button" data-note-size="${n}" aria-label="文字大小 ${n}">${n}</button>`).join('')}</div>
+ <div class="diary-note-more" hidden><button type="button" data-diary-close>取消本次编辑</button>${entry?`<button type="button" class="diary-delete" data-diary-delete>${icon('trash')}删除日记</button>`:''}</div></div>`;
 }
 export function diaryDetail(state,entry){
  const owner=diaryOwner(entry.owner),profile=normalizeDiaryCover(state.diaryCover)[owner];
  const date=localDate(entry.date).toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
  const stamp=time=>new Date(time).toLocaleString('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});
- return `<article class="diary-paper diary-detail" aria-label="日记详情"><header class="diary-paper-heading"><span class="diary-paper-owner">${escape(profile.name||(owner==='self'?'我':'AI'))} 的日记</span><time datetime="${entry.date}">${date}</time><h2>${escape(entry.title||'无题')}</h2><div class="diary-paper-mood">${moodPill(state,entry)}</div></header><div class="diary-paper-content">${escape(entry.content)}</div><footer class="diary-paper-foot"><dl><div><dt>写于</dt><dd>${stamp(entry.created)}</dd></div>${entry.updated!==entry.created?`<div><dt>修改于</dt><dd>${stamp(entry.updated)}</dd></div>`:''}</dl><button type="button" class="diary-page-primary" data-diary-action="edit-entry">编辑这篇日记</button></footer></article>`;
+ return `<article class="diary-paper diary-detail" aria-label="日记详情"><header class="diary-paper-heading"><span class="diary-paper-owner">${escape(profile.name||(owner==='self'?'我':'AI'))} 的日记</span><div class="diary-note-title"><h2>${escape(entry.title||'无题')}</h2><span class="diary-note-mood" aria-label="心情：${escape(entry.mood||'未选择')}">${diaryMoodButton(state,entry.mood)}</span></div><time datetime="${entry.date}">${date}</time></header><div class="diary-paper-content" style="font-size:${entry.textSize||16}px">${escape(entry.content)}</div><div class="diary-detail-photos">${(entry.photos||[]).map(src=>`<img src="${escape(src)}" alt="日记照片" loading="lazy">`).join('')}</div><footer class="diary-paper-foot"><dl><div><dt>写于</dt><dd>${stamp(entry.created)}</dd></div>${entry.updated!==entry.created?`<div><dt>修改于</dt><dd>${stamp(entry.updated)}</dd></div>`:''}</dl></footer></article>`;
 }
 export function moodEditor({name,color,legacy,editing}) {
  const swatches=(MOOD_SWATCHES.includes(color)?MOOD_SWATCHES:[color,...MOOD_SWATCHES]).map(swatch=>`<button type="button" class="diary-mood-swatch" style="--swatch:${swatch}" data-mood-color="${swatch}" aria-label="颜色 ${swatch}" aria-pressed="${swatch===color}"></button>`).join('');

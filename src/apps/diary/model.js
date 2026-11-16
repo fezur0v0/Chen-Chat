@@ -155,16 +155,19 @@ export function normalizeDiaryEntries(value,moods=DIARY_MOODS) {
   if(typeof entry?.id!=='string'||!entry.id||ids.has(entry.id)||!validDiaryDate(entry.date)||typeof entry.content!=='string')throw new Error('日记数据损坏');
   ids.add(entry.id);
   const created=validTime(entry.created)?entry.created:Date.now();
-  return {id:entry.id,owner:diaryOwner(entry.owner),date:entry.date,title:typeof entry.title==='string'?entry.title.slice(0,80):'',content:entry.content.slice(0,12000),mood:moods.some(m=>m.name===currentMood(entry.mood))?currentMood(entry.mood):'',created,updated:validTime(entry.updated)?entry.updated:created};
+  return {id:entry.id,owner:diaryOwner(entry.owner),date:entry.date,title:typeof entry.title==='string'?entry.title.slice(0,80):'',content:entry.content.slice(0,12000),...diaryExtras(entry.photos,entry.textSize),mood:moods.some(m=>m.name===currentMood(entry.mood))?currentMood(entry.mood):'',created,updated:validTime(entry.updated)?entry.updated:created};
  });
 }
+function diaryPhotos(value){return (Array.isArray(value)?value:[]).filter(p=>typeof p==='string'&&p.length<1200000&&/^data:image\/(png|jpeg|webp);base64,[a-z\d+/=]+$/i.test(p)).slice(0,6);}
+const diarySize=value=>[16,18,20].includes(Number(value))?Number(value):16;
+function diaryExtras(value,size){const photos=diaryPhotos(value),textSize=diarySize(size);return {...(photos.length?{photos}:{}),...(textSize!==16?{textSize}:{})};}
 export function saveDiaryEntry(state,data,now=Date.now()) {
  if(!validDiaryDate(data.date))throw new Error('请选择有效的日记日期');
  const content=String(data.content||'').trim();
  if(!content)throw new Error('写点什么，再保存吧。');
  const existing=data.id?state.diaryEntries.find(entry=>entry.id===data.id):null;
  if(data.id&&!existing)throw new Error('这篇日记已不存在');
- const entry={id:existing?.id||crypto.randomUUID(),owner:diaryOwner(existing?existing.owner:data.owner),date:data.date,title:String(data.title||'').trim().slice(0,80),content:content.slice(0,12000),mood:diaryMoods(state).some(m=>m.name===currentMood(data.mood))?currentMood(data.mood):'',created:existing?.created??now,updated:now};
+ const entry={id:existing?.id||crypto.randomUUID(),owner:diaryOwner(existing?existing.owner:data.owner),date:data.date,title:String(data.title||'').trim().slice(0,80),content:content.slice(0,12000),...diaryExtras(data.photos??existing?.photos,data.textSize??existing?.textSize),mood:diaryMoods(state).some(m=>m.name===currentMood(data.mood))?currentMood(data.mood):'',created:existing?.created??now,updated:now};
  if(existing)state.diaryEntries[state.diaryEntries.indexOf(existing)]=entry;
  else state.diaryEntries.push(entry);
  return entry;
