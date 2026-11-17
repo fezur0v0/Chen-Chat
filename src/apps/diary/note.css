@@ -39,13 +39,13 @@
 .diary-compose .diary-mood-pad{border:0;border-radius:50%;background:transparent;box-shadow:none}.diary-compose .diary-mood-guide{border:1px solid var(--hairline)}
 
 /* One continuous sheet, including navigation and tool areas. */
-.diary-app[data-diary-owner=self]{--diary-paper:#fbeaf1;--diary-wash:#fbeaf1}
+.diary-app[data-diary-owner=self]{--diary-paper:#faf9f4;--diary-wash:#faf9f4}
 .diary-app[data-diary-owner=partner]{--diary-paper:#edf4fc;--diary-wash:#edf4fc}
-:root[data-theme=dark] .diary-app[data-diary-owner=self]{--diary-paper:#2c232b;--diary-wash:#2c232b}
+:root[data-theme=dark] .diary-app[data-diary-owner=self]{--diary-paper:#292e27;--diary-wash:#292e27}
 :root[data-theme=dark] .diary-app[data-diary-owner=partner]{--diary-paper:#222c38;--diary-wash:#222c38}
-.page-content.desktop-app-page:has(.diary-app[data-diary-owner=self]:is([data-diary-screen=compose],[data-diary-screen=detail])){background:#fbeaf1}
+.page-content.desktop-app-page:has(.diary-app[data-diary-owner=self]:is([data-diary-screen=compose],[data-diary-screen=detail])){background:#faf9f4}
 .page-content.desktop-app-page:has(.diary-app[data-diary-owner=partner]:is([data-diary-screen=compose],[data-diary-screen=detail])){background:#edf4fc}
-:root[data-theme=dark] .page-content.desktop-app-page:has(.diary-app[data-diary-owner=self]:is([data-diary-screen=compose],[data-diary-screen=detail])){background:#2c232b}
+:root[data-theme=dark] .page-content.desktop-app-page:has(.diary-app[data-diary-owner=self]:is([data-diary-screen=compose],[data-diary-screen=detail])){background:#292e27}
 :root[data-theme=dark] .page-content.desktop-app-page:has(.diary-app[data-diary-owner=partner]:is([data-diary-screen=compose],[data-diary-screen=detail])){background:#222c38}
 .diary-app:is([data-diary-screen=compose],[data-diary-screen=detail]){background-color:var(--diary-paper);background-image:url('../../../assets/frost-grain.svg');background-size:128px 128px;min-height:100%}
 .diary-app[data-diary-screen=compose] .diary-compose,.diary-app[data-diary-screen=detail] .diary-detail{background:transparent;border:0;box-shadow:none}
@@ -69,7 +69,15 @@
 .diary-color-options{align-items:center;gap:4px;padding:0 2px 2px}
 .diary-color-options button{position:relative;flex:1 0 44px;min-width:44px;min-height:44px;padding:0;border:0;background:none}
 .diary-color-options button::before{content:'';position:absolute;inset:9px 2px;border-radius:5px;background:var(--swatch,var(--ink));border:1px solid var(--hairline)}
-.diary-color-options button[aria-pressed=true]::after{content:'';position:absolute;inset:5px 0;border:1.5px solid var(--ink);border-radius:8px}.diary-default-color::before{background:linear-gradient(135deg,transparent 47%,var(--diary-tone) 48% 52%,transparent 53%)!important}
+.diary-color-options button[aria-pressed=true]::after{content:'';position:absolute;inset:5px 0;border:1.5px solid var(--ink);border-radius:8px}.diary-color-options .diary-default-color::before{background:var(--diary-text-color)}
 .diary-highlight{background:#f6e38a;color:inherit;border-radius:2px;padding:0}
 .diary-rich-editor hr,.diary-paper-content hr{height:32px;margin:1.1em 0;border:0;background:none}
 .diary-rich-editor hr::after,.diary-paper-content hr::after{content:'';display:block;width:24px;height:24px;margin:auto;background:var(--diary-tone);mask:url('../../../assets/diary-divider.svg') center/contain no-repeat;-webkit-mask:url('../../../assets/diary-divider.svg') center/contain no-repeat}
+
+/* Default ink follows the paper theme; explicit saved colours stay intact. */
+.diary-app{--diary-text-color:#3e3e3e;--diary-delete-color:#bf3038}
+:root[data-theme=dark] .diary-app{--diary-text-color:#eeeae3;--diary-delete-color:#ff8b91}
+.diary-rich-editor,.diary-paper-content{color:var(--diary-text-color)}
+.diary-photo-gallery .diary-photo-remove{display:grid;place-items:center;width:48px;min-height:48px;padding:12px;border-radius:12px;color:var(--diary-delete-color);touch-action:manipulation}
+.diary-photo-remove svg{width:22px;height:22px;pointer-events:none}
+.diary-photo-remove:active{background:rgb(191 48 56 / .1)}

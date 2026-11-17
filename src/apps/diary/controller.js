@@ -1,3 +1,4 @@
+import {icon} from '../../icons.js';
 import {createRichEditor} from './rich-editor.js';
 import {plainDocument} from './rich-text.js';
 import {diary,diaryEditor,diaryMoodOptions,diaryMoodButton,diaryPhotoStrip,moodEditor} from './view.js';
@@ -168,11 +169,11 @@ export function createDiaryApp({app,getState,setState,persist,notify,compressIma
   const save=app.querySelector('[data-note-save]');if(save)save.disabled=!!moodState||uploading||waitingForRipple;
   syncFormat();
  }
- function syncFormat(){editor.querySelectorAll('[data-note-format]').forEach(b=>b.setAttribute('aria-pressed',String(noteRich?.active(b.dataset.noteFormat)||false)));const style=noteRich?.styles()||{};editor.querySelectorAll('[data-note-font-size]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.noteFontSize)===(style.fontSize||textSize))));editor.querySelectorAll('[data-note-font-color]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.noteFontColor===(style.color||'default'))));}
+ function syncFormat(){editor.querySelectorAll('[data-note-format]').forEach(b=>b.setAttribute('aria-pressed',String(noteRich?.active(b.dataset.noteFormat)||false)));const style=noteRich?.styles()||{};editor.querySelectorAll('[data-note-font-size]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.noteFontSize)===(style.fontSize||textSize))));editor.querySelectorAll('[data-note-font-color]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.noteFontColor===(!style.color||style.color==='#3e3e3e'?'default':style.color))));}
  function setFormatPane(opening){formatPaneOpen=opening;const pane=editor.querySelector('.diary-format-panel');if(pane)pane.hidden=!opening;editor.querySelector('[data-note-aa]')?.setAttribute('aria-expanded',String(opening));if(opening){noteRich?.blur();syncFormat();}}
  editor.addEventListener('focusin',e=>{if(e.target.closest('.diary-rich-editor,[name=title],[name=date]'))setFormatPane(false);});
 
- function photoGallery(editing){return photos.map((src,i)=>`<figure><img src="${src}" alt="日记照片 ${i+1}">${editing?`<button type="button" data-note-remove="${i}" aria-label="移除第 ${i+1} 张图片">移除</button>`:''}</figure>`).join('');}
+ function photoGallery(editing){return photos.map((src,i)=>`<figure><img src="${src}" alt="日记照片 ${i+1}">${editing?`<button type="button" class="diary-photo-remove" data-note-remove="${i}" aria-label="移除第 ${i+1} 张图片" title="移除图片">${icon('trash')}</button>`:''}</figure>`).join('');}
  function renderPhotos(){editor.querySelector('.diary-note-photos').innerHTML=diaryPhotoStrip(photos,true);editor.querySelector('.diary-photo-gallery').innerHTML=photoGallery(true);}
  const readerPhotos=document.createElement('dialog');readerPhotos.className='diary-photo-dialog';readerPhotos.setAttribute('aria-label','日记图片');document.body.append(readerPhotos);
  function showReaderPhotos(){const entry=currentEntry();if(!entry)return;readerPhotos.innerHTML='<div class="diary-note-picker-head"><span>日记图片</span><button type="button" aria-label="关闭图片">×</button></div><div class="diary-photo-gallery">'+(entry.photos||[]).map((src,i)=>`<figure><img src="${src}" alt="日记照片 ${i+1}"></figure>`).join('')+'</div>';readerPhotos.querySelector('button').onclick=()=>readerPhotos.close();readerPhotos.showModal();}
