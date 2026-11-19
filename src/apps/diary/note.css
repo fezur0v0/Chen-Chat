@@ -39,13 +39,13 @@
 .diary-compose .diary-mood-pad{border:0;border-radius:50%;background:transparent;box-shadow:none}.diary-compose .diary-mood-guide{border:1px solid var(--hairline)}
 
 /* One continuous sheet, including navigation and tool areas. */
-.diary-app[data-diary-owner=self]{--diary-paper:#faf9f4;--diary-wash:#faf9f4}
+.diary-app[data-diary-owner=self]{--diary-paper:#fff7fa;--diary-wash:#fff7fa}
 .diary-app[data-diary-owner=partner]{--diary-paper:#edf4fc;--diary-wash:#edf4fc}
-:root[data-theme=dark] .diary-app[data-diary-owner=self]{--diary-paper:#292e27;--diary-wash:#292e27}
+:root[data-theme=dark] .diary-app[data-diary-owner=self]{--diary-paper:#30272d;--diary-wash:#30272d}
 :root[data-theme=dark] .diary-app[data-diary-owner=partner]{--diary-paper:#222c38;--diary-wash:#222c38}
-.page-content.desktop-app-page:has(.diary-app[data-diary-owner=self]:is([data-diary-screen=compose],[data-diary-screen=detail])){background:#faf9f4}
+.page-content.desktop-app-page:has(.diary-app[data-diary-owner=self]:is([data-diary-screen=compose],[data-diary-screen=detail])){background:#fff7fa}
 .page-content.desktop-app-page:has(.diary-app[data-diary-owner=partner]:is([data-diary-screen=compose],[data-diary-screen=detail])){background:#edf4fc}
-:root[data-theme=dark] .page-content.desktop-app-page:has(.diary-app[data-diary-owner=self]:is([data-diary-screen=compose],[data-diary-screen=detail])){background:#292e27}
+:root[data-theme=dark] .page-content.desktop-app-page:has(.diary-app[data-diary-owner=self]:is([data-diary-screen=compose],[data-diary-screen=detail])){background:#30272d}
 :root[data-theme=dark] .page-content.desktop-app-page:has(.diary-app[data-diary-owner=partner]:is([data-diary-screen=compose],[data-diary-screen=detail])){background:#222c38}
 .diary-app:is([data-diary-screen=compose],[data-diary-screen=detail]){background-color:var(--diary-paper);background-image:url('../../../assets/frost-grain.svg');background-size:128px 128px;min-height:100%}
 .diary-app[data-diary-screen=compose] .diary-compose,.diary-app[data-diary-screen=detail] .diary-detail{background:transparent;border:0;box-shadow:none}
@@ -72,7 +72,7 @@
 .diary-color-options button[aria-pressed=true]::after{content:'';position:absolute;inset:5px 0;border:1.5px solid var(--ink);border-radius:8px}.diary-color-options .diary-default-color::before{background:var(--diary-text-color)}
 .diary-highlight{background:#f6e38a;color:inherit;border-radius:2px;padding:0}
 .diary-rich-editor hr,.diary-paper-content hr{height:32px;margin:1.1em 0;border:0;background:none}
-.diary-rich-editor hr::after,.diary-paper-content hr::after{content:'';display:block;width:24px;height:24px;margin:auto;background:var(--diary-tone);mask:url('../../../assets/diary-divider.svg') center/contain no-repeat;-webkit-mask:url('../../../assets/diary-divider.svg') center/contain no-repeat}
+.diary-rich-editor hr::after,.diary-paper-content hr::after{content:'';display:block;width:min(168px,75%);height:24px;margin:auto;background:var(--diary-tone);mask:url('../../../assets/diary-divider.svg') center/contain no-repeat;-webkit-mask:url('../../../assets/diary-divider.svg') center/contain no-repeat}
 
 /* Default ink follows the paper theme; explicit saved colours stay intact. */
 .diary-app{--diary-text-color:#3e3e3e;--diary-delete-color:#bf3038}

@@ -1,12 +1,13 @@
 /* Owner colours stay inside the diary; no global appearance values are written. */
-.diary-app[data-diary-owner=self]{--diary-tone:#778574;--diary-wash:#f4f3ed;--diary-paper:#faf9f4;--accent:#53664f;--tint:119 133 116;--accent-ink:#fff}
+.diary-app[data-diary-owner=self]{--diary-tone:#a36a80;--diary-wash:#fcf3f6;--diary-paper:#fff7fa;--accent:#edc1d1;--tint:214 159 181;--accent-ink:#563e48}
 .diary-app[data-diary-owner=partner]{--diary-tone:#5b86a1;--diary-wash:#edf4f8;--diary-paper:#f9fcfe;--accent:#4e7692;--tint:91 134 161;--accent-ink:#fff}
-.page-content.desktop-app-page:has(.diary-app[data-diary-owner=self]:not([data-diary-screen=cover])){background:#f4f3ed}
+.page-content.desktop-app-page:has(.diary-app[data-diary-owner=self]:not([data-diary-screen=cover])){background:#fcf3f6}
 .page-content.desktop-app-page:has(.diary-app[data-diary-owner=partner]:not([data-diary-screen=cover])){background:#edf4f8}
 .diary-app:not([data-diary-screen=cover]) .diary-track i{box-shadow:0 0 0 4px var(--diary-wash)}
 .diary-app[data-diary-screen=entries] .diary-timeline-heading{color:var(--accent)}
-.diary-app[data-diary-owner] .diary-day.is-selected .diary-day-number{background:var(--accent);color:#fff}
-:root .diary-app[data-diary-screen=entries] .diary-write.glass{background:var(--accent);background-image:none;color:#fff;border-color:rgb(255 255 255 / .4);backdrop-filter:none;-webkit-backdrop-filter:none}
+.diary-app[data-diary-owner=self][data-diary-screen=entries] .diary-timeline-heading{color:var(--diary-tone)}
+.diary-app[data-diary-owner] .diary-day.is-selected .diary-day-number{background:var(--accent);color:var(--accent-ink)}
+:root .diary-app[data-diary-screen=entries] .diary-write.glass{background:var(--accent);background-image:none;color:var(--accent-ink);border-color:rgb(255 255 255 / .4);backdrop-filter:none;-webkit-backdrop-filter:none}
 .diary-app:is([data-diary-screen=detail],[data-diary-screen=compose]){padding-bottom:0}
 .diary-paper{position:relative;isolation:isolate;min-height:calc(100dvh - 104px - env(safe-area-inset-top) - env(safe-area-inset-bottom));padding:28px 24px 24px;border-radius:3px 5px 4px 2px;background-color:var(--diary-paper);background-image:url('../../../assets/frost-grain.svg');background-size:128px 128px;box-shadow:0 3px 20px rgb(65 54 58 / .045);color:var(--ink);overflow-wrap:anywhere}
 .diary-paper::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;border-radius:inherit;background:repeating-linear-gradient(0deg,transparent 0 3px,rgb(85 66 75 / .012) 3px 4px)}
@@ -25,13 +26,13 @@
 .diary-compose .field [name=content]{min-height:38dvh;resize:vertical;font:400 16px/2.1 "Noto Serif SC","Songti SC",SimSun,serif}
 .diary-compose .diary-mood-picker{margin:20px 0 28px}.diary-compose .diary-mood-options{margin-left:-6px;margin-right:-6px}.diary-compose .diary-mood-editor{padding-top:8px}
 .diary-compose .diary-editor-footer{flex-wrap:wrap;gap:12px;padding:16px 0 0;margin-top:24px}.diary-compose .diary-editor-footer>button{min-height:48px;border-radius:14px;padding-inline:18px;font-size:13px}
-.diary-compose .diary-editor-footer .primary{background:var(--accent);color:#fff}.diary-compose .diary-editor-footer .secondary{background:color-mix(in srgb,var(--diary-tone) 10%,transparent)}
+.diary-compose .diary-editor-footer .primary{background:var(--accent);color:var(--accent-ink)}.diary-compose .diary-editor-footer .secondary{background:color-mix(in srgb,var(--diary-tone) 10%,transparent)}
 .diary-compose .diary-editor-error:not([hidden]){margin-bottom:20px;padding:12px;border-radius:12px;background:color-mix(in srgb,var(--diary-tone) 12%,transparent)}
 .diary-compose .diary-mood-pad{max-width:240px;width:min(100%,240px)}
-:root[data-theme=dark] .diary-app[data-diary-owner=self]{--diary-tone:#b2bfaa;--diary-wash:#252923;--diary-paper:#292e27;--accent:#53664f;--tint:155 175 143}
+:root[data-theme=dark] .diary-app[data-diary-owner=self]{--diary-tone:#d6a7bc;--diary-wash:#2d242a;--diary-paper:#30272d;--accent:#875d70;--tint:192 143 166;--accent-ink:#fff}
 :root[data-theme=dark] .diary-app[data-diary-owner=partner]{--diary-tone:#9bbfd6;--diary-wash:#202830;--diary-paper:#28323a;--accent:#4b738f;--tint:128 169 194}
 :root[data-theme=dark] .diary-paper-owner,:root[data-theme=dark] .diary-app[data-diary-screen=entries] .diary-timeline-heading{color:var(--diary-tone)}
-:root[data-theme=dark] .page-content.desktop-app-page:has(.diary-app[data-diary-owner=self]:not([data-diary-screen=cover])){background:#252923}
+:root[data-theme=dark] .page-content.desktop-app-page:has(.diary-app[data-diary-owner=self]:not([data-diary-screen=cover])){background:#2d242a}
 :root[data-theme=dark] .page-content.desktop-app-page:has(.diary-app[data-diary-owner=partner]:not([data-diary-screen=cover])){background:#202830}
 :root[data-theme=dark] .diary-app:not([data-diary-screen=cover]) .diary-track i{box-shadow:0 0 0 4px var(--diary-wash)}
 :root[data-theme=dark] .diary-paper::before{background:repeating-linear-gradient(0deg,transparent 0 3px,rgb(255 255 255 / .008) 3px 4px)}
