@@ -1,3 +1,4 @@
+import {bindAndroidBack} from './system-back.js';
 import {createChatGeneration} from './chat-api/controller.js';
 import {bindProvider} from './provider.js';
 import {createSidebarItemMenu} from './sidebar-menu/controller.js';
@@ -221,6 +222,7 @@ async function compressImage(file,max,{transparent=false}={}){
 let shownDate=localDate();
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&page==='home'&&shownDate!==localDate()){shownDate=localDate();render();}});
 render();
+void bindAndroidBack({app,getPage:()=>page,goHome:()=>goto('home'),onError:()=>notify('系统返回暂时不可用，请重新打开 App。')});
 
 finishSplash({wallpaper:state.appearance.splashWallpaper}).catch(()=>{document.querySelector('#splash')?.remove();app.inert=false;});
 
