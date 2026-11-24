@@ -16,6 +16,7 @@ const views={diary,music,gallery,presets,worldbook,archives,appearance,ledger:le
 export function appView(id,state,ui) {
  const app=findApp(id);
  if(!app)return '';
+ if(app.icon==='takeaway')return '<section class="desktop-app takeaway-app" data-app-page="app-takeaway"></section>';
  if(app.icon==='memory')return memory(state);
  if(app.icon==='diary')return `<section class="desktop-app diary-app" data-app-page="${app.id}" data-diary-owner="${diaryOwner(ui?.owner)}" data-diary-screen="${['cover','entries','detail','compose'].includes(ui?.screen)?ui.screen:'entries'}">${diaryHeader(state,ui)}<div class="desktop-app-body">${diary(state,ui)}</div></section>`;
  if(['music','worldbook','presets','gallery'].includes(app.icon))return `<section class="desktop-app ${app.icon}-app" data-app-page="${app.id}">${views[app.icon](state,ui)}</section>`;

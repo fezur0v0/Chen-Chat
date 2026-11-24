@@ -1,0 +1,186 @@
+.takeaway-surface{
+--bg:#f6f4f1;--card:#fffcf9;--ink:#1c1c1f;--muted:#7c766f;--line:rgb(28 28 31 / .08);
+--accent:#6aaed0;--accent-ink:#102830;--soft:#e5f3f8;--shadow:0 8px 24px rgb(28 28 31 / .06);
+--dock:rgb(255 252 249 / .94);--bar:#1c1c1f;--bar-ink:#f6f4f1;
+color-scheme:light;
+}
+:root[data-theme=dark] .takeaway-surface{
+--bg:#1c1c1f;--card:#2a2a2e;--ink:#f4f2ee;--muted:#a8a29a;--line:rgb(255 255 255 / .1);
+--accent:#8ecae6;--accent-ink:#102830;--soft:#24343c;--shadow:0 10px 28px rgb(0 0 0 / .28);
+--dock:rgb(42 42 46 / .94);--bar:#f4f2ee;--bar-ink:#1c1c1f;
+color-scheme:dark;
+}
+.takeaway-surface *{box-sizing:border-box}
+.takeaway-surface button,.takeaway-surface input,.takeaway-surface textarea{font:inherit;color:inherit}
+.takeaway-surface button{border:0;background:none;padding:0;cursor:pointer}
+.takeaway-surface img{display:block;max-width:100%}
+.takeaway-surface{width:min(480px,100%);height:100%;margin:0 auto;background:var(--bg);display:flex;flex-direction:column;overflow:hidden;position:relative}
+.takeaway-surface .takeaway-scroll{flex:1;overflow:auto;padding:calc(12px + env(safe-area-inset-top)) 16px calc(108px + env(safe-area-inset-bottom));scroll-padding-bottom:calc(108px + env(safe-area-inset-bottom))}
+.takeaway-surface.no-dock .dock{display:none}
+.takeaway-surface.in-store .takeaway-scroll{padding-bottom:calc(112px + env(safe-area-inset-bottom))}
+.takeaway-surface .addr{display:flex;align-items:center;gap:8px;min-height:44px;width:100%;text-align:left}
+.takeaway-surface .addr svg{width:18px;height:18px;flex:none}
+.takeaway-surface .addr b{font-size:16px;font-weight:650}
+.takeaway-surface .addr small{display:block;color:var(--muted);font-size:11px;font-weight:450}
+.takeaway-surface .search{display:flex;align-items:center;gap:8px;min-height:48px;margin:4px 0 12px;padding:0 14px;border-radius:999px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line)}
+.takeaway-surface .search svg{width:18px;height:18px;color:var(--muted);flex:none}
+.takeaway-surface .search input{flex:1;min-width:0;height:46px;border:0;background:transparent;outline:none}
+.takeaway-surface .cats{display:flex;gap:8px;overflow:auto;margin:0 -16px 10px;padding:0 16px 2px;scrollbar-width:none}
+.takeaway-surface .cats::-webkit-scrollbar{display:none}
+.takeaway-surface .cat{flex:none;min-height:36px;padding:0 14px;border-radius:999px;background:transparent;color:var(--muted);font-size:13px}
+.takeaway-surface .cat[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+.takeaway-surface .sorts{display:flex;gap:8px;margin-bottom:8px}
+.takeaway-surface .sorts button{min-height:36px;padding:0 12px;border-radius:999px;background:var(--card);color:var(--muted);box-shadow:inset 0 0 0 1px var(--line);font-size:13px}
+.takeaway-surface .sorts button[aria-pressed=true]{color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--ink)}
+.takeaway-surface .hint{margin:0 0 12px;color:var(--muted);font-size:12px}
+.takeaway-surface .shop{position:relative;padding:12px 0;border-bottom:1px solid var(--line)}
+.takeaway-surface .open{display:grid;grid-template-columns:92px minmax(0,1fr);gap:12px;width:100%;text-align:left}
+.takeaway-surface .shop img{width:92px;height:92px;object-fit:cover;border-radius:16px}
+.takeaway-surface .shop h2{margin:0 40px 4px 0;font-size:16px;font-weight:650}
+.takeaway-surface .sub{display:flex;flex-wrap:wrap;gap:4px 8px;color:var(--muted);font-size:12px}
+.takeaway-surface .sub b{color:var(--ink);font-weight:650}
+.takeaway-surface .eta{margin-left:auto;color:var(--ink);font-size:12px}
+.takeaway-surface .heart{position:absolute;top:4px;right:-6px;width:48px;height:48px;display:grid;place-items:center}
+.takeaway-surface .heart svg{width:20px;height:20px}
+.takeaway-surface .heart.on svg{fill:var(--accent);stroke:var(--accent)}
+.takeaway-surface .store-card{display:grid;grid-template-columns:72px minmax(0,1fr);gap:12px;padding:4px 0 12px}
+.takeaway-surface .store-card img{width:72px;height:72px;object-fit:cover;border-radius:16px}
+.takeaway-surface .store-card h2{margin:0 0 4px;font-size:20px;letter-spacing:-.03em}
+.takeaway-surface .store-card p{margin:6px 0 0;color:var(--muted);font-size:13px}
+.takeaway-surface .reco{display:flex;gap:10px;overflow:auto;margin:0 -16px 12px;padding:0 16px 4px;scrollbar-width:none}
+.takeaway-surface .reco::-webkit-scrollbar{display:none}
+.takeaway-surface .reco button{flex:none;width:108px;text-align:left}
+.takeaway-surface .reco img{width:108px;height:80px;object-fit:cover;border-radius:14px}
+.takeaway-surface .reco span{display:block;margin-top:6px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.takeaway-surface .split{display:grid;grid-template-columns:76px minmax(0,1fr);gap:8px;align-items:start}
+.takeaway-surface .rail{position:sticky;top:0;display:grid;gap:4px;max-height:calc(100dvh - 140px);overflow:auto}
+.takeaway-surface .rail button{min-height:44px;padding:8px 6px;border-radius:12px;color:var(--muted);font-size:12px;text-align:center}
+.takeaway-surface .rail button.on{background:var(--card);color:var(--ink);font-weight:650;box-shadow:var(--shadow)}
+.takeaway-surface .sec h3{margin:8px 0;font-size:13px;color:var(--muted);font-weight:550}
+.takeaway-surface .dish{display:grid;grid-template-columns:72px minmax(0,1fr);gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.takeaway-surface .dish img{width:72px;height:72px;object-fit:cover;border-radius:14px}
+.takeaway-surface .dish strong{display:block;font-size:15px}
+.takeaway-surface .dish small{color:var(--muted);font-size:12px}
+.takeaway-surface .dish .row{display:flex;align-items:center;justify-content:space-between;margin-top:6px}
+.takeaway-surface .price{font-weight:650}
+.takeaway-surface .adder{display:flex;align-items:center;gap:2px}
+.takeaway-surface .adder button{width:44px;height:44px;min-width:44px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center}
+.takeaway-surface .adder button svg{width:16px;height:16px}
+.takeaway-surface .adder .minus{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.takeaway-surface .adder b{min-width:18px;text-align:center;font-size:14px}
+.takeaway-surface .dock{position:absolute;z-index:20;left:50%;bottom:calc(12px + env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;gap:4px;padding:6px;border-radius:999px;background:var(--dock);box-shadow:var(--shadow);backdrop-filter:blur(16px)}
+.takeaway-surface .dock button{width:56px;min-width:48px;height:48px;border-radius:999px;display:grid;place-items:center;color:var(--muted)}
+.takeaway-surface .dock button[aria-current=page]{background:var(--accent);color:var(--accent-ink)}
+.takeaway-surface .cartbar{position:absolute;z-index:20;left:50%;bottom:calc(12px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(448px,calc(100% - 24px));min-height:60px;display:none;align-items:center;justify-content:space-between;gap:12px;padding:8px 8px 8px 16px;border-radius:999px;background:var(--bar);color:var(--bar-ink)}
+.takeaway-surface.in-store .cartbar{display:flex}
+.takeaway-surface .cartbar button{min-height:44px;padding:0 16px;border-radius:999px;background:var(--accent);color:var(--accent-ink);font-weight:650}
+.takeaway-surface .cartbar button:disabled{opacity:.45}
+.takeaway-surface .panel{width:min(480px,100%);max-height:min(86dvh,680px);overflow:auto;background:var(--card);border-radius:28px 28px 0 0;padding:12px 16px calc(16px + env(safe-area-inset-bottom))}
+.takeaway-surface .panel h3{margin:8px 0;font-size:18px}
+.takeaway-surface .opts{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.takeaway-surface .opt{min-height:44px;padding:0 12px;border-radius:14px;box-shadow:inset 0 0 0 1px var(--line)}
+.takeaway-surface .opt[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+.takeaway-surface .step{display:flex;align-items:center;gap:8px}
+.takeaway-surface .step button{width:48px;height:48px;border-radius:16px;background:var(--soft)}
+.takeaway-surface textarea{width:100%;min-height:72px;border:0;border-radius:16px;background:var(--bg);padding:12px;box-shadow:inset 0 0 0 1px var(--line);resize:vertical}
+.takeaway-surface .full{width:100%;min-height:52px;margin-top:12px;border-radius:16px;background:var(--ink);color:var(--bg);font-weight:650}
+.takeaway-surface .line{display:grid;grid-template-columns:56px minmax(0,1fr);gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.takeaway-surface .line img{width:56px;height:56px;object-fit:cover;border-radius:12px}
+.takeaway-surface .between{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:8px 0}
+.takeaway-surface .ok{width:72px;height:72px;margin:28px auto 12px;border-radius:50%;display:grid;place-items:center;background:var(--soft);color:var(--accent-ink)}
+.takeaway-surface .ok svg{width:32px;height:32px}
+.takeaway-surface .center{text-align:center}
+.takeaway-surface .big{font-size:40px;letter-spacing:-.04em;font-weight:600;margin:8px 0}
+.takeaway-surface .actions{display:flex;gap:10px;margin-top:22px}
+.takeaway-surface .actions button{flex:1;min-height:48px;border-radius:16px}
+.takeaway-surface .actions .alt{background:var(--soft)}
+.takeaway-surface .map{position:relative;height:180px;margin:12px 0;border-radius:20px;background:linear-gradient(#e7efe8,#dfe8e4);overflow:hidden}
+:root[data-theme=dark] .takeaway-surface .map{background:linear-gradient(#24302c,#1d2624)}
+.takeaway-surface .road{position:absolute;background:rgb(255 252 249 / .8)}
+:root[data-theme=dark] .takeaway-surface .road{background:rgb(255 255 255 / .14)}
+.takeaway-surface .road.h{left:0;right:0;top:62%;height:14px}
+.takeaway-surface .road.v{top:0;bottom:0;left:38%;width:14px}
+.takeaway-surface .dot{position:absolute;width:14px;height:14px;border-radius:50%;transform:translate(-50%,-50%)}
+.takeaway-surface .dot.shop{left:22%;top:30%;background:var(--ink)}
+.takeaway-surface .dot.home{left:78%;top:74%;background:var(--accent)}
+.takeaway-surface .dot.rider{background:#fff;box-shadow:0 0 0 6px var(--accent)}
+.takeaway-surface .steps{display:flex;justify-content:space-between;gap:4px;margin:14px 0}
+.takeaway-surface .steps span{flex:1;text-align:center;font-size:11px;color:var(--muted)}
+.takeaway-surface .steps span.on{color:var(--ink);font-weight:650}
+.takeaway-surface .steps span i{display:block;height:3px;margin-bottom:6px;border-radius:99px;background:var(--line)}
+.takeaway-surface .steps span.on i{background:var(--accent)}
+.takeaway-surface .feed{margin-top:8px}
+.takeaway-surface .feed div{padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+.takeaway-surface .feed small{display:block;color:var(--muted)}
+.takeaway-surface .bought{display:flex;gap:8px;overflow:auto;margin:0 -16px 12px;padding:0 16px;scrollbar-width:none}
+.takeaway-surface .bought button{flex:none;display:flex;align-items:center;gap:8px;min-height:48px;padding:0 12px 0 6px;border-radius:999px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line)}
+.takeaway-surface .bought img{width:36px;height:36px;border-radius:50%;object-fit:cover}
+.takeaway-surface .order{width:100%;text-align:left;padding:14px 0;border-bottom:1px solid var(--line)}
+.takeaway-surface .order b{font-size:16px}
+.takeaway-surface .me{display:flex;gap:12px;align-items:center;padding:8px 0 16px}
+.takeaway-surface .avatar{width:64px;height:64px;border-radius:22px;display:grid;place-items:center;background:var(--soft);font-size:22px}
+.takeaway-surface .block{background:var(--card);border-radius:20px;padding:4px 14px;margin-bottom:12px;box-shadow:var(--shadow)}
+.takeaway-surface .block button{width:100%;min-height:52px;display:flex;align-items:center;justify-content:space-between;text-align:left}
+.takeaway-surface .sw i{width:44px;height:26px;border-radius:99px;background:var(--line);position:relative;flex:none}
+.takeaway-surface .sw.on i{background:var(--accent)}
+.takeaway-surface .sw i:after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s}
+.takeaway-surface .sw.on i:after{transform:translateX(18px)}
+.takeaway-surface.orders-list,.takeaway-surface.orders-list .takeaway-scroll{background:#efece7}
+html[data-theme=dark] .takeaway-surface.orders-list,html[data-theme=dark] .takeaway-surface.orders-list .takeaway-scroll{background:#161618}
+.takeaway-surface .orders-page{display:grid;gap:12px;min-width:0}
+.takeaway-surface .orders-page h2{margin:4px 0 0;text-align:center;font-size:18px;font-weight:650}
+.takeaway-surface .filters{display:flex;gap:6px;padding:4px;border-radius:999px;background:var(--card)}
+.takeaway-surface .filters button{flex:1;min-height:44px;padding:0 6px;border-radius:999px;color:var(--muted);font-size:13px;white-space:nowrap}
+.takeaway-surface .filters button[aria-pressed=true]{background:var(--soft);color:var(--ink);font-weight:650}
+:root[data-theme=dark] .takeaway-surface .filters button[aria-pressed=true]{background:#3d6274;color:#f4f2ee}
+.takeaway-surface .ocard{background:#fff;border-radius:18px;padding:12px 14px 12px;min-width:0}
+:root[data-theme=dark] .takeaway-surface .ocard{background:#2c2c30}
+.takeaway-surface .ocard-top{display:flex;align-items:center;gap:8px}
+.takeaway-surface .shopgo{display:flex;align-items:center;gap:8px;flex:1;min-width:0;min-height:44px;text-align:left}
+.takeaway-surface .shopgo img{width:32px;height:32px;border-radius:8px;object-fit:cover;flex:none}
+.takeaway-surface .shopgo strong{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}
+.takeaway-surface .st{flex:none;font-size:13px;color:var(--muted);white-space:nowrap}
+.takeaway-surface .st.live{color:#2f6f8c}
+:root[data-theme=dark] .takeaway-surface .st.live{color:#8ecae6}
+.takeaway-surface .ogoods{display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;margin-top:8px;text-align:left;min-height:56px}
+.takeaway-surface .ogoods img,.takeaway-surface .ogoods .ph{width:56px;height:56px;object-fit:cover;border-radius:12px;background:var(--soft)}
+.takeaway-surface .shopgo .ph{width:32px;height:32px;border-radius:8px;background:var(--soft);flex:none}
+.takeaway-surface .oname{min-width:0}
+.takeaway-surface .ogoods b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:14px;font-weight:550}
+.takeaway-surface .oname small{display:block;margin-top:2px;color:var(--muted);font-size:12px;font-weight:450}
+.takeaway-surface .ogoods small{color:var(--muted)}
+.takeaway-surface .omoney{text-align:right;white-space:nowrap}
+.takeaway-surface .omoney b{display:block;font-size:15px}
+.takeaway-surface .omoney small{color:var(--muted);font-size:12px}
+.takeaway-surface .oacts{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin-top:10px}
+.takeaway-surface .oacts button{min-height:40px;padding:0 12px;border-radius:999px;box-shadow:inset 0 0 0 1px var(--line);font-size:13px}
+.takeaway-surface .oacts .go{background:var(--ink);color:var(--bg);box-shadow:none}
+.takeaway-surface .demo-tag{margin-left:4px;font-size:11px;color:var(--muted)}
+.takeaway-surface .empty{padding:48px 8px;text-align:center;color:var(--muted)}
+.takeaway-surface .empty strong{display:block;color:var(--ink);margin-bottom:6px}
+.takeaway-surface button:focus-visible,.takeaway-surface input:focus-visible,.takeaway-surface textarea:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+@media(max-width:360px){
+.takeaway-surface .open{grid-template-columns:76px minmax(0,1fr)}
+.takeaway-surface .shop img{width:76px;height:76px}
+.takeaway-surface .split{grid-template-columns:68px minmax(0,1fr)}
+}
+@media(prefers-reduced-motion:reduce){.takeaway-surface *{transition:none!important;scroll-behavior:auto!important}}
+
+.page-content.desktop-app-page:has(.takeaway-app){padding:0!important;overflow:hidden}
+.takeaway-app{height:100%;max-width:none;padding:0}
+.takeaway-app .takeaway-surface{width:100%;height:100%;max-width:480px;margin:auto;color:var(--ink);font-size:14px}
+.takeaway-app .app-topbar{width:auto;margin:0;padding-inline:max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-right));flex:none;column-gap:8px}
+.takeaway-app .app-topbar h1{color:var(--ink)}
+.takeaway-app .app-topbar .heart{position:static;width:44px;height:44px}
+.takeaway-app .takeaway-scroll{padding:8px 16px calc(104px + env(safe-area-inset-bottom));min-height:0;overflow-x:hidden}
+.takeaway-app .cat,.takeaway-app .sorts button,.takeaway-app .oacts button{min-height:44px}
+.takeaway-app .dock svg{width:22px;height:22px}
+.takeaway-app .takeaway-scroll .map .dot.shop{padding:0;border:0}
+.takeaway-app .takeaway-dialog{position:fixed;inset:auto 0 0;margin:0 auto;width:min(480px,100%);max-width:100%;max-height:min(86dvh,680px);padding:0;border:0;border-radius:28px 28px 0 0;color:var(--ink);background:var(--card);overflow:hidden}
+.takeaway-app .takeaway-dialog.is-centered{inset:0;margin:auto;width:min(340px,calc(100% - 32px));border-radius:24px}
+.takeaway-app .takeaway-dialog::backdrop{background:rgb(16 14 12 / .35)}
+.takeaway-app .takeaway-dialog .panel{width:100%;max-height:min(86dvh,680px);padding:16px 18px calc(18px + env(safe-area-inset-bottom));border-radius:inherit}
+.takeaway-app .step svg{width:18px;height:18px;vertical-align:middle}
+.takeaway-app .takeaway-close{float:right;width:44px;height:44px;margin:-6px -6px 4px 8px;border-radius:12px}
+.takeaway-app .takeaway-close svg{width:18px;height:18px;vertical-align:middle}
+@media(max-width:360px){.takeaway-app .dish{grid-template-columns:54px minmax(0,1fr)}.takeaway-app .dish img{width:54px;height:54px}}

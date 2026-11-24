@@ -18,7 +18,7 @@ const artwork = {
 };
 let instance=0;
 export function launcherIcon(name) {
- const svg=artwork[name];if(!svg)return '';
+ const svg=name==='takeaway'?'<svg class="launcher-glyph" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3v6a2 2 0 0 0 2 2h3a2 2 0 0 0 2-2V3M7.5 3v18M20 15V3c-3 1-5 4-5 8v4h5v6"/></svg>':artwork[name];if(!svg)return '';
  // Filters, gradients and masks must stay isolated, including dragged copies of a tile.
  const prefix=`launcher-${++instance}-`;
  return svg.replace(/\bid="([^"]+)"/g,(_,id)=>`id="${prefix}${id}"`).replace(/url\(#([^)]+)\)/g,(_,id)=>`url(#${prefix}${id})`);
