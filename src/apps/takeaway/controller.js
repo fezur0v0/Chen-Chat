@@ -335,7 +335,7 @@ export function createTakeawayApp({app,getState,persist,notify}){
  return {
   openHome(){closeLayer();ui=home();},
   sync(){
-   const slot=app.querySelector('.takeaway-app');
+   const slot=app.querySelector('[data-app-page=app-takeaway]');
    if(!slot || slot.contains(root))return;
    slot.append(root);
    paint(true);

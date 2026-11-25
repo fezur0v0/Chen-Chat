@@ -1,0 +1,46 @@
+.shell.immersive:has(.shopping-app){max-height:100dvh}
+.shopping-surface .shop-hero{display:block;width:100%;position:relative;isolation:isolate;border-radius:20px;overflow:hidden;text-align:left}
+.shopping-surface .shop-hero img{display:block;width:100%;height:clamp(145px,25vh,225px);object-fit:cover;object-position:center 58%}
+.shopping-surface .shop-hero::after{content:"";position:absolute;inset:45% 0 0;background:linear-gradient(transparent,#231f1a78);z-index:0}
+.shopping-surface .shop-hero strong{position:absolute;z-index:1;bottom:14px;left:18px;margin:0;color:white;font:500 26px/1.2 var(--font-serif,serif);letter-spacing:.08em}
+.shopping-surface .shop-options{display:flex;gap:6px;overflow:auto;padding:12px 0}
+.shopping-surface .shop-options button{flex:none;min-height:42px;padding:0 12px;border-radius:14px;background:var(--card);color:var(--muted);font-size:13px}
+.shopping-surface .shop-options button[aria-pressed=true]{background:var(--soft);color:var(--ink);font-weight:650}
+.shopping-surface .shop-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.shopping-surface .shop-tile{overflow:hidden;display:grid;align-content:start;gap:3px;background:var(--card);border-radius:16px;text-align:left;padding-bottom:12px}
+.shopping-surface .shop-tile img,.shopping-surface .shop-detail>img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}
+.shopping-surface .shop-tile strong,.shopping-surface .shop-tile small,.shopping-surface .shop-tile b{padding:0 12px}
+.shopping-surface .shop-tile strong{margin-top:6px;font-size:15px}
+.shopping-surface small{color:var(--muted)}
+.shopping-surface .shop-detail>img{border-radius:18px}
+.shopping-surface .shop-detail h2,.shopping-surface .shop-heading{margin:16px 0 4px;font-size:20px}
+.shopping-surface .shop-detail>b{display:block;margin:10px 0;font-size:20px}
+.shopping-surface .shop-detail p{line-height:1.65}
+.shopping-surface .shop-detail h3{margin:12px 0 0;font-size:15px}
+.shopping-surface .shop-detail summary{padding:12px 0;cursor:pointer}
+.shopping-surface .shop-detail dl>div{display:flex;justify-content:space-between;gap:8px;padding:6px 0}
+.shopping-surface .shop-bar,.shopping-surface .shop-sheet-buttons{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.shopping-surface .shop-bar{flex:none;width:min(100%,var(--takeaway-content-width));margin:0 auto;padding:6px max(16px,env(safe-area-inset-right)) 6px max(16px,env(safe-area-inset-left));background:var(--bg)}
+.shopping-surface.no-dock .shop-bar{padding-bottom:calc(6px + env(safe-area-inset-bottom))}
+.shopping-surface .shop-bar[hidden]{display:none}
+.shopping-surface button.shop-primary{padding:0 18px;min-height:44px;border-radius:14px;background:var(--accent);color:var(--accent-ink);font-weight:650}
+.shopping-surface .shop-bar .shop-primary{margin-left:auto}
+.shopping-surface button:disabled{opacity:.45;cursor:default}
+.shopping-surface .shop-icon,.shopping-surface .shop-quantity button{display:inline-grid;place-items:center;width:44px;height:44px}
+.shopping-surface .shop-icon svg,.shopping-surface .shop-quantity svg{width:20px;height:20px}
+.shopping-surface .shop-icon[aria-pressed=true] svg{fill:var(--accent)}
+.shopping-surface .shop-select{display:flex;align-items:center;gap:8px;min-height:44px}
+.shopping-surface input[type=checkbox]{accent-color:var(--accent);width:18px;height:18px}
+.shopping-surface .shop-line{display:grid;grid-template-columns:22px minmax(48px,76px) minmax(0,1fr) 44px;align-items:center;gap:8px;background:var(--card);padding:10px;border-radius:16px;margin-bottom:8px}
+.shopping-surface .shop-thumb img{display:block;aspect-ratio:1;object-fit:cover;width:100%;border-radius:10px}
+.shopping-surface .shop-line small{display:block;margin-top:4px}
+.shopping-surface .shop-quantity{display:flex;align-items:center}
+.shopping-surface .shop-quantity button{width:36px}
+.shopping-surface .shop-empty{display:grid;justify-items:center;padding:36px 8px}
+.shopping-surface .shop-heading{font-size:17px;margin:22px 0 12px}
+.shopping-surface .shop-order{background:var(--card);padding:14px;border-radius:16px;margin-bottom:8px}
+.shopping-surface .shop-order p{margin:6px 0}
+.shopping-surface .shop-reset{min-height:44px;color:var(--muted)}
+.shopping-surface .shop-sheet-buttons{justify-content:flex-end;margin-top:16px}
+.shopping-surface .takeaway-dialog .panel{overflow-y:auto}
+.shopping-surface .shop-sheet-buttons>button{min-width:66px;min-height:44px}

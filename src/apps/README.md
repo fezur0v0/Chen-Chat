@@ -11,6 +11,7 @@
 | 世界书 | `worldbook/` | `view.js`、`style.css`、`model.js` |
 | 档案 | `archives/` | `view.js`、`style.css` |
 | 外观 | `appearance/` | `view.js`、`style.css` |
+| 购物（尘选） | `shopping/` | 商品目录、购物车与订单在本模块维护，共用外卖的主题、底栏和安全区样式 |
 | 外卖 | `takeaway/` | `view.js`、`style.css`、`controller.js`、`model.js`、`icons.js` |
 
 `view.js` 返回页面内容，`style.css` 保存这个 App 的外观。

@@ -126,9 +126,9 @@ SOFTWARE.
 
 ## Launcher icons — Nucleo Glass
 
-`src/launcher-icons.js` embeds twelve SVGs from the official free Nucleo Glass
+`src/launcher-icons.js` embeds thirteen SVGs from the official free Nucleo Glass
 collection: feather, headphones, image, slider, book-open, box-archive,
-color-palette, msgs, hearts, gear, star-sparkle and knife-spoon. They are used
+color-palette, msgs, hearts, gear, star-sparkle, knife-spoon and cart. They are used
 for desktop App and Dock entrances. Internal UI controls retain
 their existing Lucide icons.
 
@@ -188,3 +188,9 @@ simulated takeaway catalog and its controls. The app applies its own colors
 and stroke width. The full MIT license is in `assets/licenses/tabler-icons.txt`.
 
 Source: https://github.com/tabler/tabler-icons/tree/v3.35.0/icons/outline
+
+## Shopping photographs
+
+The nine JPEGs in `assets/shopping/` accompany the supplied
+`shopping-preview.html` prototype, which credits Unsplash. They are bundled
+locally so the catalog also works offline.
