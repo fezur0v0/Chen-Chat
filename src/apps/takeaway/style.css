@@ -1,22 +1,26 @@
 .takeaway-surface{
 --bg:var(--takeaway-background,#f8f6f4);--card:#fffdfc;--ink:#2b2932;--muted:#6f6775;--line:rgb(54 49 62 / .09);
 --accent:#c6c5ee;--accent-ink:#39316b;--soft:#eeecf9;--shadow:0 8px 24px rgb(46 41 57 / .07);
---dock:rgb(255 253 252 / .94);--bar:#2b2932;--bar-ink:#f8f6f4;--danger:#9a4053;--danger-soft:#fae9ed;
+--bar:#2b2932;--bar-ink:#f8f6f4;--danger:#9a4053;--danger-soft:#fae9ed;
 color-scheme:light;
 }
 :root[data-theme=dark] .takeaway-surface{
 --bg:var(--takeaway-background,#211f26);--card:#2c2933;--ink:#f4f0f5;--muted:#c1b6c6;--line:rgb(255 255 255 / .1);
 --accent:#c6c5ee;--accent-ink:#39316b;--soft:#3c3850;--shadow:0 10px 28px rgb(0 0 0 / .28);
---dock:rgb(44 41 51 / .94);--bar:#f4f0f5;--bar-ink:#211f26;--danger:#ffc4d1;--danger-soft:#56333f;
+--bar:#f4f0f5;--bar-ink:#211f26;--danger:#ffc4d1;--danger-soft:#56333f;
 color-scheme:dark;
 }
 .takeaway-surface *{box-sizing:border-box}
 .takeaway-surface button,.takeaway-surface input,.takeaway-surface textarea{font:inherit;color:inherit}
 .takeaway-surface button{border:0;background:none;padding:0;cursor:pointer}
 .takeaway-surface{width:min(480px,100%);height:100%;margin:0 auto;background:var(--bg);display:flex;flex-direction:column;overflow:hidden;position:relative}
-.takeaway-surface .takeaway-scroll{flex:1;overflow:auto;padding:calc(12px + env(safe-area-inset-top)) 16px calc(108px + env(safe-area-inset-bottom));scroll-padding-bottom:calc(108px + env(safe-area-inset-bottom))}
+.takeaway-surface .takeaway-scroll{
+ flex:1;min-height:0;overflow:auto;overflow-x:hidden;
+ padding:8px 16px var(--takeaway-scroll-end,16px);scroll-padding-bottom:var(--takeaway-scroll-end,16px);
+}
+.takeaway-surface.no-dock{--takeaway-scroll-end:calc(16px + env(safe-area-inset-bottom))}
 .takeaway-surface.no-dock .dock{display:none}
-.takeaway-surface.in-store .takeaway-scroll{padding-bottom:calc(112px + env(safe-area-inset-bottom))}
+.takeaway-surface.in-store{--takeaway-scroll-end:calc(104px + env(safe-area-inset-bottom))}
 .takeaway-surface .addr{display:flex;align-items:center;gap:10px;min-height:56px;width:100%;padding:4px 0;text-align:left}
 .takeaway-surface .addr svg{width:18px;height:18px;flex:none}
 .takeaway-surface .addr-pin{display:grid;place-items:center;flex:none;width:36px;height:36px;border-radius:14px;background:var(--soft);color:var(--ink)}
@@ -89,9 +93,21 @@ color-scheme:dark;
 .takeaway-surface .adder button svg{width:16px;height:16px}
 .takeaway-surface .adder .minus{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
 .takeaway-surface .adder b{min-width:18px;text-align:center;font-size:14px}
-.takeaway-surface .dock{position:absolute;z-index:20;left:50%;bottom:calc(12px + env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;gap:4px;padding:6px;border-radius:999px;background:var(--dock);box-shadow:var(--shadow);backdrop-filter:blur(16px)}
-.takeaway-surface .dock button{width:56px;min-width:48px;height:48px;border-radius:999px;display:grid;place-items:center;color:var(--muted)}
-.takeaway-surface .dock button[aria-current=page]{background:var(--accent);color:var(--accent-ink)}
+.takeaway-surface .dock{
+ flex:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;
+ padding:4px max(12px,env(safe-area-inset-right)) calc(4px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));
+ background:var(--card);box-shadow:inset 0 1px 0 var(--line);
+}
+.takeaway-surface .dock button{
+ min-width:0;min-height:52px;display:grid;justify-items:center;align-content:center;gap:2px;
+ border-radius:10px;color:var(--muted);font-size:12px;line-height:1.25;
+}
+.takeaway-surface .dock-icon{display:grid;place-items:center;width:27px;height:27px;border-radius:8px}
+.takeaway-surface .dock-icon svg{width:21px;height:21px}
+.takeaway-surface .dock button[aria-current=page]{color:var(--ink);font-weight:700}
+.takeaway-surface .dock button[aria-current=page] .dock-icon{
+ background:var(--takeaway-dock-accent);color:var(--takeaway-dock-ink);
+}
 .takeaway-surface .cartbar{position:absolute;z-index:20;left:50%;bottom:calc(12px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(448px,calc(100% - 24px));min-height:60px;display:none;align-items:center;justify-content:space-between;gap:12px;padding:8px 8px 8px 16px;border-radius:999px;background:var(--bar);color:var(--bar-ink)}
 .takeaway-surface.in-store .cartbar{display:flex}
 .takeaway-surface .cartbar button{min-height:44px;padding:0 16px;border-radius:999px;background:var(--accent);color:var(--accent-ink);font-weight:650}
@@ -190,14 +206,16 @@ html[data-theme=dark] .takeaway-surface.orders-list,html[data-theme=dark] .takea
  background:var(--takeaway-background);padding:0!important;overflow:hidden;
 }
 :root[data-theme=dark] .page-content.desktop-app-page:has(.takeaway-app){--takeaway-background:#211f26}
-.desktop-app.takeaway-app{height:100%;max-width:none;padding:0}
+.desktop-app.takeaway-app{
+ --takeaway-dock-accent:var(--accent,#7a879a);
+ --takeaway-dock-ink:var(--accent-ink,#000);
+ height:100%;max-width:none;padding:0;
+}
 .takeaway-app .takeaway-surface{width:100%;height:100%;max-width:480px;margin:auto;color:var(--ink);font-size:14px}
 .takeaway-app .app-topbar{width:auto;margin:0;padding-inline:max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-right));flex:none;column-gap:8px}
 .takeaway-app .app-topbar h1{color:var(--ink)}
 .takeaway-app .app-topbar .heart{position:static;width:44px;height:44px}
-.takeaway-app .takeaway-scroll{padding:8px 16px calc(104px + env(safe-area-inset-bottom));min-height:0;overflow-x:hidden}
 .takeaway-app .cat,.takeaway-app .sorts button,.takeaway-app .oacts button{min-height:44px}
-.takeaway-app .dock svg{width:22px;height:22px}
 .takeaway-app .takeaway-scroll .map .dot.shop{padding:0;border:0}
 .takeaway-app .takeaway-dialog{position:fixed;inset:auto 0 0;margin:0 auto;width:min(480px,100%);max-width:100%;max-height:min(86dvh,680px);padding:0;border:0;border-radius:28px 28px 0 0;color:var(--ink);background:var(--card);overflow:hidden}
 .takeaway-app .takeaway-dialog.is-centered{inset:0;margin:auto;width:min(340px,calc(100% - 32px));border-radius:24px}

@@ -106,7 +106,10 @@ export function takeawayView({data,ui,draft,pending,userName}){
    return food();
  }
  function dock(){
-   return [['food','外卖','tools'],['orders','订单','orders'],['me','我的','me']].map(([id,label,name])=>`<button data-take-action="tab" data-id="${id}" aria-label="${label}" title="${label}" ${ui.tab===id&&ui.route!=='store'&&ui.route!=='checkout'?'aria-current="page"':''}>${icon(name)}</button>`).join('');
+   return [['food','首页','home'],['orders','订单','orders'],['me','我的','me']].map(([id,label,name])=>
+    `<button type="button" data-take-action="tab" data-id="${id}" ${ui.tab===id?'aria-current="page"':''}>
+     <span class="dock-icon">${icon(name)}</span><span>${label}</span>
+    </button>`).join('');
  }
  function cartbar(){
    const s=findStore(ui.storeId);
