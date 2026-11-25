@@ -248,8 +248,18 @@
 .conversation-live-center{text-align:center;margin:12px 0;color:var(--muted);font-size:11px;line-height:1.5}
 .conversation-story-meta{color:var(--muted);font:11px/1.7 var(--font-ui);margin-top:6px}
 
-/* 图片描述：固定灰底白字，不跟随主题。 */
-.conversation-live-row .bubble.live-image{width:148px;min-width:0;max-width:100%;aspect-ratio:1;box-sizing:border-box;overflow:auto;overflow-wrap:anywhere;padding:14px;border:2px dashed rgb(229 229 229);border-radius:18px;background:rgb(114 114 114);color:rgb(255 255 255);box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;display:flex;align-items:safe center;justify-content:safe center;text-align:center;font-size:13px;line-height:1.65}
+/* 图片描述卡共用纸面磨砂颗粒，浅灰底和白字独立于主题色。 */
+.conversation-live-row .bubble.live-image{
+ width:148px;min-width:0;max-width:100%;aspect-ratio:1;box-sizing:border-box;
+ overflow:auto;overflow-wrap:anywhere;padding:14px;border:0;border-radius:18px;
+ background:rgb(125 127 130 / .91) url('../../assets/frost-grain.svg') repeat;
+ background-size:128px 128px;
+ color:rgb(255 255 255);text-shadow:0 1px 2px rgb(0 0 0 / .52);box-shadow:none;
+ -webkit-backdrop-filter:blur(12px) grayscale(1);
+ backdrop-filter:blur(12px) grayscale(1);
+ display:flex;align-items:safe center;justify-content:safe center;text-align:center;
+ font-size:13px;line-height:1.65;
+}
 /* ===== 转账卡片 =====
    顶栏、金额、备注、底部状态。收到的待处理卡可收款或拒收，操作后保存状态并追加回执。 */
 .live-transfer{
