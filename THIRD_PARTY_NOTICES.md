@@ -180,3 +180,11 @@ Source: https://github.com/adobe-fonts/source-han-sans/releases/tag/2.005R
 ## Tiptap / ProseMirror
 
 The diary rich-text editor bundles Tiptap 3.31.3, ProseMirror and their runtime dependencies (MIT). Full package versions and license texts: `src/vendor/editor-LICENSES.txt`. Source and locked build instructions: `scripts/vendor-editor/`.
+
+## Tabler Icons v3.35.0
+
+`src/apps/takeaway/icons.js` embeds selected Tabler outline SVGs for the
+simulated takeaway catalog and its controls. The app applies its own colors
+and stroke width. The full MIT license is in `assets/licenses/tabler-icons.txt`.
+
+Source: https://github.com/tabler/tabler-icons/tree/v3.35.0/icons/outline

@@ -1,15 +1,16 @@
 import {backButton,escape} from '../../ui.js';
-import {icon} from '../../icons.js';
+import {takeawayIcon as icon} from './icons.js';
 import {STATUSES} from './catalog.js';
 import {
- addToCart,changeQuantity,emptyTakeaway,findItem,findStore,MAX_ORDERS,recipeDraft,submitOrder
+ addToCart,changeQuantity,emptyTakeaway,findItem,findStore,MAX_ADDRESSES,MAX_ORDERS,
+ recipeDraft,removeAddress,saveAddress,submitOrder
 } from './model.js';
 import {takeawayView} from './view.js';
 
 const home = () => ({tab:'food',route:'list',storeId:null,orderId:null,returnTab:'food',
- query:'',cuisine:'全部',sort:'mix',orderTab:'all',layer:null,orderNote:''});
+ query:'',cuisine:'全部',sort:'mix',orderTab:'all',layer:null,addressPage:'list',addressId:'',orderNote:''});
 const tabTitles = {food:'外卖',orders:'订单',me:'我的'};
-const layerTitles = {addr:'演示地址',cart:'购物袋',spec:'规格和备注',switch:'更换购物袋',reset:'重置外卖数据'};
+const layerTitles = {addr:'收货地址',cart:'购物袋',spec:'规格和备注',switch:'更换购物袋',reset:'重置外卖数据'};
 
 export function createTakeawayApp({app,getState,persist,notify}){
  const root=document.createElement('div');
@@ -20,6 +21,17 @@ export function createTakeawayApp({app,getState,persist,notify}){
  let ui=home(),draft=null,pending=null,opener=null;
  const data=()=>getState().takeaway;
  const views=()=>takeawayView({data:data(),ui,draft,pending:pending?.storeId,userName:getState().home.userName});
+
+ function sizeAddressSheet(){
+  if(ui.layer!=='addr')return;
+  const viewport=window.visualViewport;
+  if(!viewport)return;
+  const bottom=Math.max(0,window.innerHeight-viewport.height-viewport.offsetTop);
+  dialog.style.setProperty('--address-keyboard',`${bottom}px`);
+  dialog.style.setProperty('--address-viewport',`${viewport.height}px`);
+ }
+ window.visualViewport?.addEventListener('resize',sizeAddressSheet);
+ window.visualViewport?.addEventListener('scroll',sizeAddressSheet);
 
  function commit(change){
   const state=getState(),previous=structuredClone(state.takeaway);
@@ -37,17 +49,23 @@ export function createTakeawayApp({app,getState,persist,notify}){
    opener=null;
    return;
   }
-  dialog.classList.toggle('is-centered',['addr','switch','reset'].includes(ui.layer));
+  const address=ui.layer==='addr';
+  dialog.classList.toggle('is-centered',['switch','reset'].includes(ui.layer));
+  dialog.classList.toggle('is-address',address);
+  if(address)sizeAddressSheet();
   dialog.setAttribute('aria-label',layerTitles[ui.layer]);
   const content=views().layers();
   if(!content)return;
   const temp=document.createElement('template');
   temp.innerHTML=content;
-  temp.content.firstElementChild?.insertAdjacentHTML('afterbegin',
+  if(!address)temp.content.firstElementChild?.insertAdjacentHTML('afterbegin',
    '<button type="button" class="takeaway-close" data-take-action="close" aria-label="关闭">'+icon('close')+'</button>');
   const next=temp.content.firstElementChild;
   const panel=dialog.firstElementChild;
-  if(dialog.open && panel){
+  if(dialog.open && address){
+   dialog.replaceChildren(next);
+   next.querySelector('h3')?.focus({preventScroll:true});
+  }else if(dialog.open && panel){
    const scroll=panel.scrollTop,focus=document.activeElement;
    const key=focus instanceof HTMLButtonElement ? {...focus.dataset} : null;
    panel.replaceChildren(...next.childNodes);
@@ -82,6 +100,8 @@ export function createTakeawayApp({app,getState,persist,notify}){
 
  function closeLayer(){
   ui.layer=null;
+  ui.addressPage='list';
+  ui.addressId='';
   pending=null;
   draft=null;
   drawLayer();
@@ -90,6 +110,30 @@ export function createTakeawayApp({app,getState,persist,notify}){
  function showLayer(layer){
   ui.layer=layer;
   drawLayer();
+ }
+
+ function showAddressPage(page,id=''){
+  ui.addressPage=page;
+  ui.addressId=id;
+  drawLayer();
+ }
+
+ function backLayer(){
+  if(ui.layer==='addr'&&ui.addressPage!=='list')showAddressPage('list');
+  else closeLayer();
+ }
+
+ function updateAddress(change,close=false){
+  if(!commit(change))return;
+  if(close)closeLayer();
+  else{
+   ui.addressPage='list';
+   ui.addressId='';
+  }
+  paint();
+  const trigger=scroller.querySelector('[data-take-action=addr]');
+  if(close)trigger?.focus({preventScroll:true});
+  else opener=trigger;
  }
 
  function showList(tab){
@@ -128,7 +172,7 @@ export function createTakeawayApp({app,getState,persist,notify}){
  }
 
  function back(){
-  if(ui.layer){closeLayer();return;}
+  if(ui.layer){backLayer();return;}
   if(ui.route==='checkout'){ui.route='store';paint(true);return;}
   if(ui.route==='store'){showList(ui.returnTab);return;}
   showList(ui.route==='success'||ui.route==='delivery'?'orders':'food');
@@ -228,6 +272,20 @@ export function createTakeawayApp({app,getState,persist,notify}){
     if(commit(state=>{state.prefs[id]=!state.prefs[id];return true;}))paint();
     break;
    case 'addr':showLayer('addr');break;
+   case 'address-new':
+    if(data().addresses.length<MAX_ADDRESSES)showAddressPage('edit');
+    break;
+   case 'address-edit':showAddressPage('edit',id);break;
+   case 'address-delete':showAddressPage('delete',id);break;
+   case 'address-list':showAddressPage('list');break;
+   case 'address-remove':updateAddress(state=>removeAddress(state,id));break;
+   case 'address-use':
+    updateAddress(state=>{
+     if(!state.addresses.some(address=>address.id===id))return false;
+     state.addressId=id;
+     return true;
+    },true);
+    break;
    case 'ask-reset':showLayer('reset');break;
    case 'do-reset':
     if(commit(state=>{Object.assign(state,emptyTakeaway());return true;})){showList('me');notify('外卖数据已重置');}
@@ -238,6 +296,20 @@ export function createTakeawayApp({app,getState,persist,notify}){
     break;
    }
   }
+ });
+
+ dialog.addEventListener('submit',event=>{
+  const form=event.target;
+  if(!form.matches('[data-take-address-form]'))return;
+  event.preventDefault();
+  for(const field of form.querySelectorAll('[required]')){
+   if(field.value.trim())continue;
+   field.value='';
+   field.reportValidity();
+   return;
+  }
+  const fields=Object.fromEntries(new FormData(form));
+  updateAddress(state=>saveAddress(state,ui.addressId,fields));
  });
 
  root.addEventListener('input',event=>{
@@ -258,7 +330,7 @@ export function createTakeawayApp({app,getState,persist,notify}){
    category.classList.toggle('on',category.dataset.id===current?.dataset.section);
   }
  },{passive:true});
- dialog.addEventListener('cancel',event=>{event.preventDefault();closeLayer();});
+ dialog.addEventListener('cancel',event=>{event.preventDefault();backLayer();});
 
  return {
   openHome(){closeLayer();ui=home();},

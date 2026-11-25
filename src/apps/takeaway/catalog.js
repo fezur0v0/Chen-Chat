@@ -1,23 +1,4 @@
 // Fictional shops and menus from the supplied takeaway prototype.
-export const PHOTOS = {
- "LUNCH": "assets/takeaway/lunch.jpg",
- "NOODLE": "assets/takeaway/noodle.jpg",
- "TEA": "assets/takeaway/tea.jpg",
- "SWEET": "assets/takeaway/sweet.jpg",
- "SAND": "assets/takeaway/sand.jpg",
- "SALAD": "assets/takeaway/salad.jpg",
- "CHICKEN": "assets/takeaway/chicken.jpg",
- "RICE": "assets/takeaway/rice.jpg",
- "RAMEN": "assets/takeaway/ramen.jpg",
- "CREAM": "assets/takeaway/cream.jpg",
- "DUMP": "assets/takeaway/dump.jpg",
- "MANGO": "assets/takeaway/mango.jpg",
- "COCOA": "assets/takeaway/cocoa.jpg",
- "CAKE": "assets/takeaway/cake.jpg",
- "TOAST": "assets/takeaway/toast.jpg",
- "BOWL": "assets/takeaway/bowl.jpg"
-};
-
 export const STORES=[
  {id:'lunch',name:'午后食堂',cuisine:'简餐',eta:'25–35 分钟',etaN:30,min:20,fee:3,rating:'4.8',sales:'月售 800+',km:'0.6 km',cover:'LUNCH',blurb:'米饭和沙拉分开装。评分、月售和距离都是演示。',items:[
   {id:'l1',cat:'米饭',name:'酱汁鸡腿饭',price:32,sales:'月售 320+',img:'CHICKEN',desc:'鸡腿、时蔬、米饭。',groups:[{label:'饭量',choices:[['n','正常',0],['s','少饭',0]]},{label:'辣度',choices:[['0','不辣',0],['1','微辣',0]]}]},

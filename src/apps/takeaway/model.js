@@ -3,6 +3,8 @@ import {STORES, STATUSES} from './catalog.js';
 export const MAX_ORDERS = 200;
 export const MAX_CART_LINES = 40;
 export const MAX_QUANTITY = 99;
+export const MAX_ADDRESSES = 20;
+export const demoAddress = {name:'', phone:'', street:'延南洞 12-3'};
 export const defaultPreferences = {mild:false, lessIce:true, noCilantro:false};
 export const findStore = id => STORES.find(store => store.id === id);
 export const findItem = (store,id) => store?.items.find(item => item.id === id);
@@ -11,7 +13,39 @@ export const cartCount = cart => cart?.lines.reduce((total,line) => total + line
 const text = (value,max) => typeof value === 'string' ? value.trim().slice(0,max) : '';
 
 export function emptyTakeaway(){
- return {favs:[], prefs:{...defaultPreferences}, cart:null, orders:[]};
+ return {favs:[], prefs:{...defaultPreferences}, cart:null, orders:[], addresses:[], addressId:''};
+}
+
+function addressFields(value){
+ return {name:text(value?.name,30),phone:text(value?.phone,24),street:text(value?.street,120)};
+}
+
+export function selectedAddress(data){
+ return data.addresses.find(address=>address.id===data.addressId) || demoAddress;
+}
+
+export function saveAddress(data,id,value){
+ const fields=addressFields(value);
+ if(!fields.name || !fields.street)return false;
+ if(id){
+  const index=data.addresses.findIndex(address=>address.id===id);
+  if(index<0)return false;
+  data.addresses[index]={id,...fields};
+ }else{
+  if(data.addresses.length>=MAX_ADDRESSES)return false;
+  const newId=crypto.randomUUID();
+  data.addresses.push({id:newId,...fields});
+  if(!data.addressId)data.addressId=newId;
+ }
+ return true;
+}
+
+export function removeAddress(data,id){
+ const index=data.addresses.findIndex(address=>address.id===id);
+ if(index<0)return false;
+ data.addresses.splice(index,1);
+ if(data.addressId===id)data.addressId=data.addresses[0]?.id || '';
+ return true;
 }
 
 function normalizeLines(lines,store){
@@ -31,6 +65,14 @@ function normalizeLines(lines,store){
 export function normalizeTakeaway(value){
  const clean=emptyTakeaway();
  if(!value || typeof value!=='object')return clean;
+ const addressIds=new Set();
+ if(Array.isArray(value.addresses))for(const address of value.addresses.slice(0,MAX_ADDRESSES)){
+  const id=text(address?.id,80),fields=addressFields(address);
+  if(!id || addressIds.has(id) || !fields.name || !fields.street)continue;
+  addressIds.add(id);
+  clean.addresses.push({id,...fields});
+ }
+ clean.addressId=addressIds.has(value.addressId) ? value.addressId : clean.addresses[0]?.id || '';
  if(Array.isArray(value.favs))clean.favs=STORES.filter(store=>value.favs.includes(store.id)).map(store=>store.id);
  for(const key of Object.keys(clean.prefs)){
   if(typeof value.prefs?.[key]==='boolean')clean.prefs[key]=value.prefs[key];
@@ -44,7 +86,9 @@ export function normalizeTakeaway(value){
   const lines=normalizeLines(order?.lines,store);
   if(!id||seen.has(id)||!lines.length)continue;
   seen.add(id);
+  const address=addressFields(order.address);
   clean.orders.push({id,storeId:store.id,lines,fee:store.fee,note:text(order.note,80),
+   address:address.street ? address : {...demoAddress},
    created:Number.isFinite(order.created)&&Math.abs(order.created)<=8.64e15 ? order.created : 0,
    status:Number.isInteger(order.status)&&STATUSES[order.status]?order.status:0});
  }
@@ -94,7 +138,8 @@ export function submitOrder(data,note){
  const cart=data.cart,store=findStore(cart?.storeId);
  if(!store || !cart.lines.length || subtotal(cart.lines)<store.min)return null;
  const order={id:'SD-'+crypto.randomUUID().slice(0,8).toUpperCase(),storeId:store.id,
-  lines:cart.lines.map(line=>({...line})),fee:store.fee,note:text(note,80),created:Date.now(),status:0};
+  lines:cart.lines.map(line=>({...line})),fee:store.fee,note:text(note,80),
+  address:addressFields(selectedAddress(data)),created:Date.now(),status:0};
  if(data.orders.length>=MAX_ORDERS)return null;
  data.orders.unshift(order);
  data.cart=null;
