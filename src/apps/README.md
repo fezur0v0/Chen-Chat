@@ -11,6 +11,7 @@
 | 世界书 | `worldbook/` | `view.js`、`style.css`、`model.js` |
 | 档案 | `archives/` | `view.js`、`style.css` |
 | 外观 | `appearance/` | `view.js`、`style.css` |
+| 外卖 | `takeaway/` | `view.js`、`style.css`、`controller.js`、`model.js`、`icons.js` |
 
 `view.js` 返回页面内容，`style.css` 保存这个 App 的外观。
 `index.js` 负责公共页头和返回主页；标准页头复用 `../ui.js` 的 `appPageHeader()`，记忆和系统设置全屏页也使用同一模板。`catalog.js` 管理名称、图标和稳定的入口 ID。外观标记 desktop:false，仅从底部第三个快捷入口打开，不在桌面或添加列表重复展示；旧布局中的 ID 仍兼容保留，外观数据和路由不变。
@@ -48,3 +49,7 @@ moom 的导航例外：页头左侧使用 `sidebarButton()`，没有返回箭头
 日记便签编辑已更新：顶部撤销／重做／保存、居中心情选择、独立画布、底部富文本工具栏与三格照片区，格式和照片可随备份恢复。详情和数据边界见 diary/README.md。
 
 日记当前使用连续纸面与五个底部工具；Aa 展开文字样式、字号和色板，旧标题结构仅为兼容保留。详情见 diary/README.md。
+
+## 外卖图标
+
+餐品分类、菜品缩略图和外卖内部操作使用 [Tabler Icons v3.35.0 Outline](https://github.com/tabler/tabler-icons/tree/v3.35.0/icons/outline)。SVG 路径存放在 `takeaway/icons.js`，新增同类图标时沿用这一版，通过 `takeawayIcon()` 或 `foodIllustration()` 渲染。底栏可以在 CSS 单独加粗描边，选中圆点和控件高亮读全局外观主题色。桌面的外卖入口使用 Nucleo Glass 的 `knife-spoon`。Tabler 的 MIT 许可见 [tabler-icons.txt](../../assets/licenses/tabler-icons.txt)。

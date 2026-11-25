@@ -1,4 +1,4 @@
-import {escape as esc} from '../../ui.js';
+import {avatar,escape as esc} from '../../ui.js';
 import {STORES, STATUSES} from './catalog.js';
 import {demoAddress,findStore,findItem,subtotal as money,cartCount} from './model.js';
 import {takeawayIcon as icon,foodIllustration as art} from './icons.js';
@@ -10,7 +10,8 @@ const sorts=[['mix','综合排序'],['distance','距离优先'],['price','低价
 const yuan=amount=>'¥'+amount;
 const orderDate=new Intl.DateTimeFormat('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false});
 const recordedAt=order=>order.created?orderDate.format(order.created):'本机记录';
-export function takeawayView({data,ui,draft,pending,userName}){
+export function takeawayView({state,ui,draft,pending}){
+ const data=state.takeaway;
  const count=()=>cartCount(data.cart);
  function shops(){
   const query=ui.query.trim().toLowerCase();
@@ -95,7 +96,7 @@ export function takeawayView({data,ui,draft,pending,userName}){
  function me(){
    const favs=data.favs.map(findStore).filter(Boolean);
    const prefs=[['mild','少辣'],['lessIce','少冰'],['noCilantro','不要香菜']];
-   return `<div class="me"><div class="avatar">${esc(userName.slice(0,1))}</div><div><b>${esc(userName)}</b><div class="hint">外卖偏好与收藏</div></div></div><div class="profile-address">${addressButton(data)}</div><div class="block">${prefs.map(([k,label])=>`<button class="sw ${data.prefs[k]?'on':''}" data-take-action="pref" data-id="${k}" aria-pressed="${!!data.prefs[k]}"><span>${label}</span><i></i></button>`).join('')}</div><div class="block"><div class="between"><b>收藏的店</b></div>${favs.length?favs.map(s=>`<button data-take-action="open-favorite" data-id="${s.id}"><span>${esc(s.name)}</span><small>${esc(s.cuisine)}</small></button>`).join(''):'<p class="hint">在店铺右边点爱心。</p>'}</div><div class="block"><button data-take-action="ask-reset">重置演示数据</button></div><p class="hint">外卖订单仅用于本机模拟。</p>`;
+   return `<div class="me">${avatar(state,'user')}<b>${esc(state.home.userName)}</b></div><div class="profile-address">${addressButton(data)}</div><div class="block">${prefs.map(([k,label])=>`<button class="sw ${data.prefs[k]?'on':''}" data-take-action="pref" data-id="${k}" aria-pressed="${!!data.prefs[k]}"><span>${label}</span><i></i></button>`).join('')}</div><div class="block"><div class="between"><b>收藏的店</b></div>${favs.length?favs.map(s=>`<button data-take-action="open-favorite" data-id="${s.id}"><span>${esc(s.name)}</span><small>${esc(s.cuisine)}</small></button>`).join(''):'<p class="hint">在店铺右边点爱心。</p>'}</div><div class="block"><button data-take-action="ask-reset">重置演示数据</button></div><p class="hint">外卖订单仅用于本机模拟。</p>`;
  }
  function view(){
    if(ui.tab==='orders')return ui.route==='delivery'?delivery():orders();
@@ -107,8 +108,8 @@ export function takeawayView({data,ui,draft,pending,userName}){
  }
  function dock(){
    return [['food','首页','home'],['orders','订单','orders'],['me','我的','me']].map(([id,label,name])=>
-    `<button type="button" data-take-action="tab" data-id="${id}" ${ui.tab===id?'aria-current="page"':''}>
-     <span class="dock-icon">${icon(name)}</span><span>${label}</span>
+    `<button type="button" data-take-action="tab" data-id="${id}" aria-label="${label}" title="${label}" ${ui.tab===id?'aria-current="page"':''}>
+     <span class="dock-icon">${icon(name)}</span>
     </button>`).join('');
  }
  function cartbar(){
