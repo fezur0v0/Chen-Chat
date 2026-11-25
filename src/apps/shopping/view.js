@@ -6,7 +6,7 @@ import {findProduct,selectedLines,total} from './model.js';
 
 export const titles={home:'尘选',cart:'购物车',me:'我的'};
 const action=(name,value='')=>`data-shop-action="${name}" data-value="${esc(String(value))}"`;
-const image=p=>`<img src="./assets/shopping/${p.img}.jpg" alt="${esc(p.alt)}" style="object-position:${p.pos}" loading="lazy">`;
+const image=(p,alt='')=>`<img class="shop-art" src="./assets/shopping/${p.id}.svg" alt="${esc(alt)}" width="240" height="180" loading="lazy">`;
 const card=p=>`<button class="shop-tile" ${action('product',p.id)}>${image(p)}<strong>${esc(p.name)}</strong><small>${esc(p.material)}</small><b>¥${p.price}</b></button>`;
 export function productGrid(ui){
  const term=ui.query.trim().toLowerCase();
@@ -16,12 +16,12 @@ export function productGrid(ui){
 export function homeView(ui){
  const categories=['全部',...new Set(products.map(p=>p.cat))];
  return `<label class="search">${icon('search')}<input type="search" data-shop-search placeholder="搜索商品或材质" aria-label="搜索商品或材质" value="${esc(ui.query)}"></label>
- <button class="shop-hero" data-shop-action="product" data-value="ceramic" aria-label="本周器物，查看雾白杯组"><img src="./assets/shopping/hero.jpg" alt=""><strong>本周器物</strong></button>
+ <button class="shop-hero" data-shop-action="product" data-value="ceramic" aria-label="本周器物，查看雾白杯组"><strong>本周器物</strong><img src="./assets/shopping/hero.svg" alt="" width="320" height="224"></button>
  <div class="shop-options" aria-label="商品分类">${categories.map(c=>`<button ${action('category',c)} aria-pressed="${ui.category===c}">${esc(c)}</button>`).join('')}</div>
  <div class="shop-grid">${productGrid(ui)}</div>`;
 }
 export function detailView(p,ui){
- return `<div class="shop-detail">${image(p)}<h2>${esc(p.name)}</h2><small>${esc(p.material)}</small><b>¥${p.price}</b><p>${esc(p.blurb)}</p>
+ return `<div class="shop-detail">${image(p,p.alt)}<h2>${esc(p.name)}</h2><small>${esc(p.material)}</small><b>¥${p.price}</b><p>${esc(p.blurb)}</p>
  <h3>${esc(p.options.name)}</h3><div class="shop-options">${p.options.values.map(v=>`<button ${action('option',v)} aria-pressed="${ui.option===v}">${esc(v)}</button>`).join('')}</div>
  <p>${esc(p.story)}</p><details><summary>商品规格</summary><dl>${p.specs.map(([k,v])=>`<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl></details></div>`;
 }

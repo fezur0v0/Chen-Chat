@@ -188,9 +188,3 @@ simulated takeaway catalog and its controls. The app applies its own colors
 and stroke width. The full MIT license is in `assets/licenses/tabler-icons.txt`.
 
 Source: https://github.com/tabler/tabler-icons/tree/v3.35.0/icons/outline
-
-## Shopping photographs
-
-The nine JPEGs in `assets/shopping/` accompany the supplied
-`shopping-preview.html` prototype, which credits Unsplash. They are bundled
-locally so the catalog also works offline.
