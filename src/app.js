@@ -1,3 +1,4 @@
+import {createPhoneApp} from './apps/phone/controller.js';
 import {createShoppingApp} from './apps/shopping/controller.js';
 import {createTakeawayApp} from './apps/takeaway/controller.js';
 import {bindAndroidBack} from './system-back.js';
@@ -43,6 +44,7 @@ const homeEditor=createHomeEditor({app,getState:()=>state,setState:value=>{state
 const galleryApp=createGalleryApp({app,getState:()=>state,setState:value=>{state=value;},persist,notify,compressImage,render:()=>render()});
 const diaryApp=createDiaryApp({app,getState:()=>state,setState:value=>{state=value;},persist,notify,compressImage});
 const ledgerApp=createLedgerApp({app,notify});
+const phoneApp=createPhoneApp({app,getState:()=>state,persist});
 const shoppingApp=createShoppingApp({app,getState:()=>state,persist,notify});
 const takeawayApp=createTakeawayApp({app,getState:()=>state,persist,notify});
 const musicApp=createMusicApp({app,getState:()=>state,setState:value=>{state=value;},persist,notify,compressImage});
@@ -85,7 +87,7 @@ function render(){
  if(sidebarDialog.open){const scroll=sidebarDialog.querySelector('.sidebar-conversations')?.scrollTop||0;sidebarDialog.innerHTML=sidebar(state,page);sidebarDialog.querySelector('.sidebar-conversations').scrollTop=scroll;}
  for(const id of opened){const d=document.getElementById(id);if(d)d.open=true;}
  const messages=document.querySelector('#messages');if(messages)messages.scrollTop=messages.scrollHeight;
- const input=app.querySelector('[name=message]');if(input){input.value=composeDraft;input.setSelectionRange(selection.start,selection.end);resizeComposer();}updateViewport();syncTray();chatMedia.sync();ledgerApp.sync();diaryApp.sync();takeawayApp.sync();shoppingApp.sync();
+ const input=app.querySelector('[name=message]');if(input){input.value=composeDraft;input.setSelectionRange(selection.start,selection.end);resizeComposer();}updateViewport();syncTray();chatMedia.sync();ledgerApp.sync();diaryApp.sync();takeawayApp.sync();shoppingApp.sync();phoneApp.sync();
 }
 // Keep the wallpaper, dock and scroll container mounted during desktop updates.
 function renderHome(){
@@ -106,7 +108,7 @@ function renderHome(){
  }
  if(focusedDot!==undefined)dots.querySelector(`[data-page="${focusedDot}"]`)?.focus({preventScroll:true});
 }
-function goto(next){if(next==='app-memory')next='memory';if(next==='chat'&&composerSession!==state.active){composeDraft='';chatUI.attachments=[];chatUI.replyTo=null;}composerSession=state.active;homeEditor.exit();if(next==='app-diary'&&page!=='app-diary')diaryApp.openHome();if(next==='app-gallery')galleryApp.openHome();if(next==='app-ledger'&&page!=='app-ledger')ledgerApp.openHome();if(next==='app-shopping'&&page!==next)shoppingApp.openHome();if(next==='app-takeaway'&&page!=='app-takeaway')takeawayApp.openHome();if(sidebarDialog.open)sidebarDialog.close();chatUI.tray='';page=next;render();app.querySelector('.page-content')?.scrollTo(0,0);if(findApp(next)||['memory','settings'].includes(next))app.querySelector('.desktop-app-header h1,.music-header h1,.moom-header h1')?.focus({preventScroll:true});}
+function goto(next){if(next==='app-memory')next='memory';if(next==='chat'&&composerSession!==state.active){composeDraft='';chatUI.attachments=[];chatUI.replyTo=null;}composerSession=state.active;homeEditor.exit();if(next==='app-diary'&&page!=='app-diary')diaryApp.openHome();if(next==='app-gallery')galleryApp.openHome();if(next==='app-ledger'&&page!=='app-ledger')ledgerApp.openHome();if(next==='app-phone'&&page!==next)phoneApp.openHome();if(next==='app-shopping'&&page!==next)shoppingApp.openHome();if(next==='app-takeaway'&&page!=='app-takeaway')takeawayApp.openHome();if(sidebarDialog.open)sidebarDialog.close();chatUI.tray='';page=next;render();app.querySelector('.page-content')?.scrollTo(0,0);if(findApp(next)||['memory','settings'].includes(next))app.querySelector('.desktop-app-header h1,.music-header h1,.moom-header h1')?.focus({preventScroll:true});}
 function focusSettings(id){if(id==='appearance-settings'){goto('app-appearance');return;}goto('settings');const d=document.getElementById(id);if(d){d.open=true;opened.add(id);d.scrollIntoView({behavior:'smooth',block:'start'});}}
 function showMemoryEditor(item,source=''){dialog.innerHTML=memoryEditor(item,source);dialog.showModal();dialog.querySelector('[name=title]').focus();}
 function closeModal(){dialog.close();}

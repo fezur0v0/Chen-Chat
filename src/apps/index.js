@@ -16,6 +16,7 @@ const views={diary,music,gallery,presets,worldbook,archives,appearance,ledger:le
 export function appView(id,state,ui) {
  const app=findApp(id);
  if(!app)return '';
+ if(app.icon==='phone')return '<section class="desktop-app phone-app" data-app-page="app-phone"></section>';
  if(app.icon==='shopping')return '<section class="desktop-app takeaway-app shopping-app" data-app-page="app-shopping"></section>';
  if(app.icon==='takeaway')return '<section class="desktop-app takeaway-app" data-app-page="app-takeaway"></section>';
  if(app.icon==='memory')return memory(state);

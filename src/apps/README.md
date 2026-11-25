@@ -11,6 +11,7 @@
 | 世界书 | `worldbook/` | `view.js`、`style.css`、`model.js` |
 | 档案 | `archives/` | `view.js`、`style.css` |
 | 外观 | `appearance/` | `view.js`、`style.css` |
+| 查手机 | `phone/` | 角色手机的虚构聊天、动态与生活记录，桌面壁纸独立设置 |
 | 购物（尘选） | `shopping/` | 商品目录、购物车与订单在本模块维护，共用外卖的主题、底栏和安全区样式 |
 | 外卖 | `takeaway/` | `view.js`、`style.css`、`controller.js`、`model.js`、`icons.js` |
 

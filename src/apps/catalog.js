@@ -7,6 +7,7 @@ export const APPS = [
  {id:'app-worldbook',name:'世界书',icon:'worldbook',subtitle:'一起构建，属于你们的世界。'},
  {id:'app-archives',name:'档案',icon:'archives',subtitle:'关于你，也关于陪伴你的 TA。'},
  {id:'app-ledger',name:'记账',icon:'ledger',subtitle:'把每一笔，轻轻记下。'},
+ {id:'app-phone',name:'查手机',icon:'phone',subtitle:'角色的虚构手机桌面'},
  {id:'app-shopping',name:'购物',icon:'shopping',subtitle:'尘选'},
  {id:'app-takeaway',name:'外卖',icon:'takeaway',subtitle:'选一家店，点一顿喜欢的。'},
  {id:'app-memory',desktop:false,name:'记忆',icon:'memory',subtitle:'把珍贵的日常，慢慢留下。'},

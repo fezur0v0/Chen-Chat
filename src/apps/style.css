@@ -9,6 +9,7 @@
 @import './appearance/style.css';
 @import './takeaway/style.css';
 @import './shopping/style.css';
+@import './phone/style.css';
 
 .home-app{min-width:0;--app-line:var(--ink)}
 .home-app-launch{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:8px;border:0;background:none;padding:4px 0 0;color:var(--app-line);border-radius:18px;font-family:var(--font-ui)}
