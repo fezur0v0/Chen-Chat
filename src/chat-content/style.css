@@ -229,7 +229,13 @@
 .composer .compose-row textarea{flex:1;min-width:0;width:0;min-height:44px;max-height:164px;padding:10px 3px;border:0;background:none;line-height:24px;font-size:16px;border-radius:8px;outline-offset:-2px}
 .compose-row textarea::placeholder{color:var(--muted);opacity:.85}
 .composer-actions{display:flex;align-items:center;flex-shrink:0;gap:0}
-.compose-row button>svg{width:21px;height:21px}.compose-row .send>svg{width:22px;height:22px}
+.compose-row button>svg{width:21px;height:21px}
+.composer-actions .send>span{display:grid;place-items:center}
+.composer-actions .send svg{width:22px;height:22px}
+.composer-actions .send[data-mode=send]{color:var(--accent)}
+.composer-actions .send[data-mode=reply]{background:rgb(var(--tint) / .16)}
+.composer-actions .send[data-mode=send] .send-reply,
+.composer-actions .send[data-mode=reply] .send-plane{display:none}
 .compose-row [aria-expanded=true]{background:rgb(var(--tint) / .1)}
 .composer .pending-attachments:empty{display:none}.composer .pending-attachments:not(:empty){padding:7px 6px 8px}
 .composer .reply-compose{margin:6px 7px 5px;padding-bottom:9px}.composer .voice-import-state{padding:9px 10px 5px}
@@ -248,11 +254,11 @@
 .conversation-live-center{text-align:center;margin:12px 0;color:var(--muted);font-size:11px;line-height:1.5}
 .conversation-story-meta{color:var(--muted);font:11px/1.7 var(--font-ui);margin-top:6px}
 
-/* 图片描述卡共用纸面磨砂颗粒，浅灰底和白字独立于主题色。 */
+/* 图片描述卡沿用细颗粒磨砂材质。 */
 .conversation-live-row .bubble.live-image{
  width:148px;min-width:0;max-width:100%;aspect-ratio:1;box-sizing:border-box;
  overflow:auto;overflow-wrap:anywhere;padding:14px;border:0;border-radius:18px;
- background:rgb(125 127 130 / .91) url('../../assets/frost-grain.svg') repeat;
+ background:rgb(27 29 33 / .76) url('../../assets/frost-grain.svg') repeat;
  background-size:128px 128px;
  color:rgb(255 255 255);text-shadow:0 1px 2px rgb(0 0 0 / .52);box-shadow:none;
  -webkit-backdrop-filter:blur(12px) grayscale(1);

@@ -87,7 +87,7 @@ function render(){
  if(sidebarDialog.open){const scroll=sidebarDialog.querySelector('.sidebar-conversations')?.scrollTop||0;sidebarDialog.innerHTML=sidebar(state,page);sidebarDialog.querySelector('.sidebar-conversations').scrollTop=scroll;}
  for(const id of opened){const d=document.getElementById(id);if(d)d.open=true;}
  const messages=document.querySelector('#messages');if(messages)messages.scrollTop=messages.scrollHeight;
- const input=app.querySelector('[name=message]');if(input){input.value=composeDraft;input.setSelectionRange(selection.start,selection.end);resizeComposer();}updateViewport();syncTray();chatMedia.sync();ledgerApp.sync();diaryApp.sync();takeawayApp.sync();shoppingApp.sync();phoneApp.sync();
+ const input=app.querySelector('[name=message]');if(input){input.value=composeDraft;input.setSelectionRange(selection.start,selection.end);resizeComposer();syncComposerAction(input);}updateViewport();syncTray();chatMedia.sync();ledgerApp.sync();diaryApp.sync();takeawayApp.sync();shoppingApp.sync();phoneApp.sync();
 }
 // Keep the wallpaper, dock and scroll container mounted during desktop updates.
 function renderHome(){
@@ -183,13 +183,25 @@ app.addEventListener('click',event=>{
 sidebarDialog.addEventListener('click',e=>{if(e.target===sidebarDialog){const r=sidebarDialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)sidebarDialog.close();}else handleAction(e);});
 app.addEventListener('submit',e=>{
  e.preventDefault();const form=e.target,data=Object.fromEntries(new FormData(form));
- if(form.getAttribute('id')==='compose'){if(generation.busy(state.active))return notify('这次回复尚未结束，可以先停止生成。');if(chatUI.voiceBusy||chatUI.voiceRecording)return notify('请先结束录音，等待语音保存完成。');if(!data.message.trim()&&!chatUI.attachments.length)return;const snapshot=structuredClone(state);addDraftMessage(state,data.message,chatUI.attachments,chatUI.replyTo);const ok=persist();if(!ok){state=snapshot;return;}composeDraft='';selection={start:0,end:0};chatUI.attachments=[];chatUI.replyTo=null;chatUI.tray='';render();app.querySelector('[name=message]').focus();void generation.generate(state.active);}
+ if(form.id==='compose'){
+  if(generation.busy(state.active)||chatUI.generation?.hasUnsaved||chatUI.voiceBusy||chatUI.voiceRecording)return;
+  if(!data.message.trim()&&!chatUI.attachments.length){
+   if(e.submitter?.dataset.mode==='reply')void generation.generate(state.active);
+   return;
+  }
+  const session=state.sessions.find(s=>s.id===state.active),title=session.title;
+  if(!addDraftMessage(state,data.message,chatUI.attachments,chatUI.replyTo))return;
+  if(!persist()){session.messages.pop();session.title=title;return;}
+  composeDraft='';selection={start:0,end:0};chatUI.attachments=[];chatUI.replyTo=null;chatUI.tray='';
+  render();
+  app.querySelector('[name=message]')?.focus();
+ }
  else if(form.getAttribute('id')==='persona-form'){if(!data.name.trim())return notify('请填写 AI 名字。');state.persona={name:data.name.trim().slice(0,40),prompt:data.prompt};saveNotice('角色已保存。');}
  else if(form.getAttribute('id')==='plugin-form'){if(!data.name.trim()||!data.url.trim())return notify('请填写名称和服务地址。');if(!validEndpoint(data.url.trim()))return notify('请使用不含密钥、查询参数或账号信息的 HTTPS 地址。');const p={id:data.id||crypto.randomUUID(),name:data.name.trim().slice(0,80),type:data.type,url:data.url.trim()},i=state.plugins.findIndex(x=>x.id===p.id);if(i<0)state.plugins.push(p);else state.plugins[i]=p;saveNotice('配置已保存，插件运行尚未接入。');render();}
 });
 app.addEventListener('input',e=>{
  const t=e.target;
- if(t.name==='message'){composeDraft=t.value;selection={start:t.selectionStart,end:t.selectionEnd};resizeComposer();}
+ if(t.name==='message'){composeDraft=t.value;selection={start:t.selectionStart,end:t.selectionEnd};resizeComposer();syncComposerAction(t);}
  if(t.id==='session-search'){const pos=t.selectionStart;sessionSearch=t.value;render();const n=app.querySelector('#session-search');n.focus();try{n.setSelectionRange(pos,pos);}catch{}}
  if(t.id==='memory-search'){const pos=t.selectionStart;memorySearch=t.value;render();const n=app.querySelector('#memory-search');n.focus();try{n.setSelectionRange(pos,pos);}catch{}}
  if(['accent','blur','opacity'].includes(t.name)&&t.closest('#appearance-settings')){state.appearance[t.name]=t.name==='accent'?t.value:Number(t.value);applyAppearance();if(t.type==='range')t.style.setProperty('--range-fill',`${(Number(t.value)-Number(t.min))/(Number(t.max)-Number(t.min))*100}%`);if(t.name==='accent'){app.querySelector('.custom-color-picker')?.style.setProperty('--swatch',t.value);const value=app.querySelector('[data-custom-color-value]');if(value)value.textContent=t.value;}const output=document.querySelector(`#${t.name}-output`);if(output)output.textContent=t.name==='opacity'?`${100-state.appearance.opacity}%`:`${state.appearance.blur}px`;if(t.name==='opacity')t.setAttribute('aria-valuetext',`${100-state.appearance.opacity}% 透明度`);}
@@ -215,7 +227,7 @@ app.addEventListener('change',async e=>{
  }
 
 });
-app.addEventListener('keydown',e=>{if(e.target.name==='message'&&e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&!e.repeat){e.preventDefault();e.target.form.requestSubmit();}});
+app.addEventListener('keydown',e=>{if(e.target.name==='message'&&e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&!e.repeat){e.preventDefault();if(e.target.value.trim()||chatUI.attachments.length)e.target.form.requestSubmit();}});
 dialog.addEventListener('click',e=>{if(e.target.closest('[data-action=close-modal]'))closeModal();});
 dialog.addEventListener('change',e=>{if(e.target.name==='kind')document.querySelector('#memory-days-field').hidden=e.target.value==='permanent';});
 dialog.addEventListener('submit',e=>{e.preventDefault();try{saveMemory(state,Object.fromEntries(new FormData(e.target)));const ok=persist();closeModal();render();if(ok)notify('记忆已收藏。');}catch(error){notify(error.message);}});
@@ -233,6 +245,15 @@ void bindAndroidBack({app,getPage:()=>page,goHome:()=>goto('home'),onError:()=>n
 finishSplash({wallpaper:state.appearance.splashWallpaper}).catch(()=>{document.querySelector('#splash')?.remove();app.inert=false;});
 
 function rememberSelection(){const input=app.querySelector('[name=message]');if(input)selection={start:input.selectionStart,end:input.selectionEnd};}
+function syncComposerAction(input){
+ const submit=input.form.querySelector('.send');
+ const hasDraft=Boolean(input.value.trim()||chatUI.attachments.length);
+ const canReply=state.sessions.find(s=>s.id===state.active)?.messages.at(-1)?.role==='user';
+ const reply=!hasDraft&&canReply;
+ submit.dataset.mode=reply?'reply':'send';
+ submit.setAttribute('aria-label',reply?'让对方回复':'发送消息');
+ submit.disabled=(!hasDraft&&!canReply)||Boolean(chatUI.voiceBusy||chatUI.voiceRecording||chatUI.generation?.busy||chatUI.generation?.hasUnsaved);
+}
 function resizeComposer(){const input=app.querySelector('[name=message]');if(!input)return;input.style.height='auto';const style=getComputedStyle(input),max=parseFloat(style.lineHeight)*6+parseFloat(style.paddingTop)+parseFloat(style.paddingBottom);input.style.height=`${Math.min(input.scrollHeight,max)}px`;input.style.overflowY=input.scrollHeight>max?'auto':'hidden';const footer=app.querySelector('.composer-wrap');if(footer)app.querySelector('.chat-view').style.setProperty('--composer-height',`${footer.getBoundingClientRect().height}px`);}
 function updateViewport(){const shell=app.querySelector('.immersive');if(!shell)return;const vv=window.visualViewport;shell.style.height=`${vv?vv.height:window.innerHeight}px`;shell.style.top=`${vv?vv.offsetTop:0}px`;}
 window.visualViewport?.addEventListener('resize',updateViewport);window.visualViewport?.addEventListener('scroll',updateViewport);window.addEventListener('resize',()=>{updateViewport();resizeComposer();});
