@@ -42,6 +42,27 @@ test('metadata and media corruption are detected before any restore writes',asyn
  await assert.rejects(inspectArchive(await modified(bundle,entries=>{const name=Object.keys(entries).find(p=>p.startsWith('media/'));entries[name][0]^=1;})),/校验失败/);
  assert.equal(f.media.writes.length,0);
 });
+test('online tracks restore their source IDs without being treated as missing local audio',async()=>{
+ const f=fixture();
+ const online={id:'netease:10',neteaseId:'10',title:'在线歌曲'};
+ f.state.music.tracks.push(online);
+ f.state.music.neteaseEndpoint='https://music.example.test';
+ f.state.music.currentId=online.id;
+ f.state.music.queue.push(online.id);
+ f.state.music.playlists[0].trackIds.push(online.id);
+ const bundle=await createArchive(f.state,f.media.stores);
+ assert.equal(bundle.manifest.media.length,2);
+ assert.deepEqual(bundle.manifest.missing,[]);
+ const preview=await inspectArchive(asFile(bundle));
+ const restored=await restoreArchive(preview,{stores:memoryMedia().stores,storage:storage()});
+ const [local,remote]=restored.music.tracks;
+ assert.notEqual(local.id,f.track.id);
+ assert.equal(remote.neteaseId,'10');
+ assert.equal(restored.music.currentId,online.id);
+ assert.deepEqual(restored.music.queue,[local.id,online.id]);
+ assert.deepEqual(restored.music.playlists[0].trackIds,[local.id,online.id]);
+ assert.equal(restored.music.neteaseEndpoint,'https://music.example.test');
+});
 test('unsupported versions, unexpected paths and missing manifest references are rejected',async()=>{
  const f=fixture(),bundle=await createArchive(f.state,f.media.stores);
  const manifestChange=change=>modified(bundle,entries=>{const manifest=JSON.parse(strFromU8(entries['manifest.json']));change(manifest);entries['manifest.json']=strToU8(JSON.stringify(manifest));});

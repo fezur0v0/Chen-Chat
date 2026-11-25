@@ -3,9 +3,13 @@ import { music, musicSheet, musicArtwork } from './view.js';
 import { musicIcon } from './icons.js';
 import { musicCollections, trackFromFile, nextMusicId, PLAY_MODES, formatMusicTime } from './model.js';
 import { musicFile } from './files.js';
+import {neteaseLyrics,neteasePlayback,normalizeMusicEndpoint} from './netease.js';
+import {createNeteaseAccount} from './netease-account.js';
 export function createMusicApp({app,getState,setState,persist,notify,compressImage}) {
  const ui={screen:'home',playlistId:'builtin:all',returnScreen:'home',search:'',playing:false,time:0,duration:0,loading:false,missing:false,busy:false,seeking:false,together:{distanceKm:null,elapsedSeconds:null}};
  const audio=new Audio();audio.preload='metadata';
+ const netease=createNeteaseAccount({endpoint:()=>data().neteaseEndpoint,refresh:()=>{if(ui.screen==='online')refresh();}});
+ const online=netease.ui;ui.online=online;ui.lyrics='';ui.preview=false;
  const dialog=document.createElement('dialog');dialog.className='music-sheet glass bottom-sheet';document.body.append(dialog);
  const picker=document.createElement('input');picker.type='file';picker.multiple=true;picker.accept='audio/*,.mp3,.m4a,.aac,.wav,.ogg,.flac,.opus';picker.hidden=true;picker.dataset.musicFiles='';document.body.append(picker);
  let objectUrl='',loadedId='',generation=0,sheetKind='',sheetItem='',draftArt='',returnFocus,importTarget='builtin:all',replaceId='',sheetRevision=0,closingSheet=false;
@@ -48,6 +52,7 @@ export function createMusicApp({app,getState,setState,persist,notify,compressIma
  function stop() {
   generation++;audio.pause();audio.removeAttribute('src');audio.load();loadedId='';
   if(objectUrl)URL.revokeObjectURL(objectUrl);objectUrl='';ui.playing=false;ui.time=0;ui.duration=0;ui.loading=false;ui.missing=false;
+  ui.lyrics='';ui.preview=false;
  }
  function syncPlayback() {
   ui.playing=!audio.paused&&!audio.ended;
@@ -72,12 +77,22 @@ export function createMusicApp({app,getState,setState,persist,notify,compressIma
   if(!commit(state=>{state.music.currentId=id;state.music.queue=queue?.length?[...queue]:[id];}))return;
   ui.loading=true;ui.duration=track.duration;refresh();
   try {
-   const file=await musicFile(id);if(ticket!==generation)return;
-   if(!file){ui.missing=true;throw new Error('这首歌的文件不在当前设备，请重新选择音乐文件。');}
-   objectUrl=URL.createObjectURL(file);loadedId=id;audio.src=objectUrl;
+   if(track.neteaseId){
+    const base=data().neteaseEndpoint;
+    const stream=await neteasePlayback(base,track.neteaseId,netease.cookie());if(ticket!==generation)return;
+    ui.preview=stream.preview;audio.src=stream.url;
+    void neteaseLyrics(base,track.neteaseId).then(lyrics=>{
+     if(ticket===generation){ui.lyrics=lyrics;refresh();}
+    }).catch(()=>{});
+   }else{
+    const file=await musicFile(id);if(ticket!==generation)return;
+    if(!file){ui.missing=true;throw new Error('这首歌的文件不在当前设备，请重新选择音乐文件。');}
+    objectUrl=URL.createObjectURL(file);audio.src=objectUrl;
+   }
+   loadedId=id;
    await audio.play();if(ticket!==generation)return;
    commit(state=>{const entry=state.music.tracks.find(t=>t.id===id);if(entry)entry.lastPlayed=Date.now();});
-  }catch(error){if(ticket!==generation)return;notify(error.name==='NotAllowedError'?'再点一下播放，就可以开始聆听。':ui.missing?error.message:'这首音乐暂时无法播放，请换一个浏览器支持的音频文件。');}
+  }catch(error){if(ticket!==generation)return;notify(error.name==='NotAllowedError'?'再点一下播放，就可以开始聆听。':track.neteaseId||ui.missing?error.message:'这首音乐暂时无法播放，请换一个浏览器支持的音频文件。');}
   finally{if(ticket===generation){ui.loading=false;refresh();if(dialog.open&&sheetKind==='queue')updateQueue();}}
  }
  function queueForTrack() {
@@ -86,7 +101,7 @@ export function createMusicApp({app,getState,setState,persist,notify,compressIma
  async function toggle() {
   if(ui.loading)return;
   if(ui.playing){audio.pause();syncPlayback();return;}
-  if(loadedId===data().currentId&&objectUrl){try{await audio.play();}catch{notify('音乐暂时无法播放，请重新选择文件。');}return;}
+  if(loadedId===data().currentId&&audio.src&&!audio.error){try{await audio.play();}catch{notify('音乐暂时无法播放，请稍后再试。');}return;}
   if(data().currentId)await playTrack(data().currentId,data().queue);
   else chooseFiles();
  }
@@ -117,6 +132,15 @@ export function createMusicApp({app,getState,setState,persist,notify,compressIma
  }
  function handle(event) {
   const button=event.target.closest('button');if(!button)return;
+  if(button.dataset.neteasePlaylist){void netease.openPlaylist(button.dataset.neteasePlaylist);return;}
+  if(button.dataset.neteaseTrack){
+   const song=online.songs.find(item=>item.id===button.dataset.neteaseTrack);
+   if(!song)return;
+   if(!data().tracks.some(track=>track.id===song.id)&&!commit(state=>{
+    state.music.tracks.push({...song,cover:'',fileName:'',type:'',size:0,created:Date.now(),lastPlayed:0,liked:false});
+   }))return;
+   void playTrack(song.id,[song.id]);return;
+  }
   if(button.dataset.musicList){navigate('playlist',button.dataset.musicList);return;}
   if(button.dataset.musicPlaylist){
    const list=musicCollections(data()).find(p=>p.id===button.dataset.musicPlaylist);
@@ -128,7 +152,13 @@ export function createMusicApp({app,getState,setState,persist,notify,compressIma
   switch(button.dataset.musicAction) {
    case 'music-home':navigate('home');break;
    case 'player':navigate('player');break;
-   case 'leave-player':navigate(ui.returnScreen==='playlist'?'playlist':'home');break;
+   case 'leave-player':navigate(ui.returnScreen);break;
+   case 'netease':navigate('online');break;
+   case 'netease-cancel':netease.cancel();break;
+   case 'netease-logout':netease.reset();refresh();break;
+   case 'netease-more-lists':void netease.moreLists();break;
+   case 'netease-more-songs':void netease.openPlaylist(online.playlist?.id,true);break;
+   case 'netease-search':app.querySelector('[data-netease-form] [name=search]')?.focus();break;
    case 'search':if(ui.screen!=='playlist')navigate('playlist','builtin:all');app.querySelector('[name=music-search]')?.focus();break;
    case 'import':chooseFiles();break;
    case 'replace-file':chooseFiles(true);break;
@@ -152,6 +182,20 @@ export function createMusicApp({app,getState,setState,persist,notify,compressIma
   // A retained button can change its action during navigation; dispatch this click once.
   if(button&&!button.hasAttribute('data-action'))event.stopImmediatePropagation();
   handle(event);
+ });
+ app.addEventListener('submit',event=>{
+  const form=event.target;
+  if(!form.matches('[data-netease-form]'))return;
+  event.preventDefault();
+  const fields=new FormData(form),base=String(fields.get('endpoint')||'').trim();
+  const endpoint=normalizeMusicEndpoint(base);
+  if(!endpoint){notify('请填写 HTTPS 服务地址。本机调试可使用 localhost。');return;}
+  if(data().neteaseEndpoint!==endpoint){
+   if(!commit(state=>{state.music.neteaseEndpoint=endpoint;}))return;
+   netease.reset();
+  }
+  if(event.submitter?.value==='login')void netease.login();
+  else void netease.search(String(fields.get('search')||'').trim().slice(0,100));
  });
  dialog.addEventListener('click',handle);
  dialog.addEventListener('close',()=>{if(dialog.open)return;sheetRevision++;closingSheet=false;dialog.style.transform='';if(returnFocus?.isConnected)returnFocus.focus({preventScroll:true});});
@@ -206,5 +250,5 @@ export function createMusicApp({app,getState,setState,persist,notify,compressIma
   const track=data().tracks.find(t=>t.id===loadedId);if(track&&Number.isFinite(audio.duration)&&Math.abs(track.duration-audio.duration)>.1)commit(()=>{track.duration=audio.duration;});
  });
  audio.addEventListener('ended',()=>{syncPlayback();const id=nextMusicId(data(),1,true);if(id)void playTrack(id,data().queue);});
- return {ui,reset(){stop();ui.screen='home';ui.playlistId='builtin:all';ui.search='';if(dialog.open)dialog.close();}};
+ return {ui,reset(){stop();netease.reset();ui.screen='home';ui.playlistId='builtin:all';ui.search='';if(dialog.open)dialog.close();}};
 }

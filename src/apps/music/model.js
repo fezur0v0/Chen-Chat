@@ -1,7 +1,9 @@
+import {neteaseId,normalizeMusicEndpoint} from './netease.js';
+
 const text=(value,max=120)=>typeof value==='string'?value.slice(0,max):'';
 const artwork=value=>typeof value==='string'&&value.length<400000&&/^data:image\/(jpeg|png|webp);base64,[a-z\d+/=]+$/i.test(value)?value:'';
 export const PLAY_MODES=['list','one','shuffle'];
-export function emptyMusic(){return {tracks:[],playlists:[],currentId:'',queue:[],mode:'list'};}
+export function emptyMusic(){return {tracks:[],playlists:[],currentId:'',queue:[],mode:'list',neteaseEndpoint:''};}
 export function normalizeMusic(value) {
  if(value===undefined)return emptyMusic();
  if(!value||!Array.isArray(value.tracks)||!Array.isArray(value.playlists))throw new Error('音乐数据损坏');
@@ -9,14 +11,15 @@ export function normalizeMusic(value) {
  const tracks=value.tracks.map(track=>{
   if(typeof track?.id!=='string'||!track.id||ids.has(track.id)||typeof track.title!=='string')throw new Error('歌曲数据损坏');
   ids.add(track.id);
-  return {id:track.id,title:text(track.title)||'未命名歌曲',artist:text(track.artist)||'本机音乐',cover:artwork(track.cover),fileName:text(track.fileName,240),type:text(track.type,100),size:Number.isFinite(track.size)?Math.max(0,track.size):0,duration:Number.isFinite(track.duration)?Math.max(0,track.duration):0,liked:track.liked===true,created:Number.isFinite(track.created)?track.created:Date.now(),lastPlayed:Number.isFinite(track.lastPlayed)?track.lastPlayed:0};
+  const source=neteaseId(track.neteaseId);
+  return {id:track.id,...(source?{neteaseId:source}:{}),title:text(track.title)||'未命名歌曲',artist:text(track.artist)||'本机音乐',cover:artwork(track.cover),fileName:text(track.fileName,240),type:text(track.type,100),size:Number.isFinite(track.size)?Math.max(0,track.size):0,duration:Number.isFinite(track.duration)?Math.max(0,track.duration):0,liked:track.liked===true,created:Number.isFinite(track.created)?track.created:Date.now(),lastPlayed:Number.isFinite(track.lastPlayed)?track.lastPlayed:0};
  });
  const listIds=new Set(),playlists=value.playlists.map(list=>{
   if(typeof list?.id!=='string'||!list.id||list.id.startsWith('builtin:')||listIds.has(list.id)||typeof list.title!=='string'||!Array.isArray(list.trackIds))throw new Error('歌单数据损坏');
   listIds.add(list.id);
   return {id:list.id,title:text(list.title,60)||'新的歌单',description:text(list.description,300),cover:artwork(list.cover),trackIds:[...new Set(list.trackIds.filter(id=>ids.has(id)))],created:Number.isFinite(list.created)?list.created:Date.now()};
  });
- return {tracks,playlists,currentId:ids.has(value.currentId)?value.currentId:'',queue:[...new Set((Array.isArray(value.queue)?value.queue:[]).filter(id=>ids.has(id)))],mode:PLAY_MODES.includes(value.mode)?value.mode:'list'};
+ return {tracks,playlists,neteaseEndpoint:normalizeMusicEndpoint(value.neteaseEndpoint),currentId:ids.has(value.currentId)?value.currentId:'',queue:[...new Set((Array.isArray(value.queue)?value.queue:[]).filter(id=>ids.has(id)))],mode:PLAY_MODES.includes(value.mode)?value.mode:'list'};
 }
 export function musicCollections(music) {
  return [

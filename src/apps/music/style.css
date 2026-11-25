@@ -55,3 +55,25 @@
 @supports not (backdrop-filter:blur(1px)){.music-sheet,.music-mini{background:var(--solid)}}
 
 .music-storage-note{font-size:10px;line-height:1.8;color:var(--muted);margin:22px 4px 0;text-align:center}
+.music-online form{display:grid;gap:8px}
+.music-online form>details{padding:8px 10px}
+.music-online summary,.music-online-lyrics summary{cursor:pointer;font-size:13px}
+.music-online form>details .field{display:grid;gap:6px;margin-top:10px}
+.music-online .field input{width:100%;min-height:44px;border:1px solid var(--hairline);border-radius:12px;background:transparent;padding:8px;color:inherit}
+.music-online .music-search{margin:0 4px}
+.music-online button:not(.music-song-main){min-height:44px}
+.music-online .music-search button{flex:none;padding:0 4px}
+.music-online-login,.music-online-account{margin:0 4px;padding:3px 12px;border-radius:14px;background:rgb(var(--tint) / .13)}
+.music-online-account{display:flex;gap:12px;justify-content:space-between;align-items:center}
+.music-online-account strong{overflow-wrap:anywhere}
+.music-online-account button{flex:none}
+.music-online-qr{display:grid;justify-items:center;gap:2px;margin-top:10px}
+.music-online-qr img{background:white;border-radius:12px}
+.music-online h2{font-size:15px;margin:12px 4px}
+.music-online-playlists{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.music-online-playlist{display:flex;align-items:center;gap:6px;text-align:left;padding:6px 8px;border-radius:12px;background:rgb(var(--tint) / .08)}
+.music-online-playlist[aria-pressed=true]{background:rgb(var(--tint) / .19)}
+.music-online-playlist span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.music-online-playlist svg{width:16px;height:16px}
+.music-online-lyrics{margin:6px 0 12px}
+.music-online-lyrics p{white-space:pre-wrap;line-height:1.8;max-height:35dvh;overflow:auto}

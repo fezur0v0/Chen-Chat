@@ -16,7 +16,7 @@ export function summarize(state){
 }
 export function mediaReferences(state){
  const refs=new Map();
- for(const track of state.music.tracks)refs.set(`music/${track.id}`,{kind:'music',id:track.id,name:track.fileName||track.title,type:track.type});
+ for(const track of state.music.tracks)if(!track.neteaseId)refs.set(`music/${track.id}`,{kind:'music',id:track.id,name:track.fileName||track.title,type:track.type});
  for(const session of state.sessions)for(const message of session.messages)for(const attachment of message.attachments||[])if(attachment.kind==='voice'&&attachment.voice?.fileId){
   const id=attachment.voice.fileId;refs.set(`voice/${id}`,{kind:'voice',id,name:attachment.name,type:attachment.type});
  }
@@ -98,9 +98,10 @@ export async function restoreArchive(preview,{stores,storage,signal,onProgress=(
     const id=mapping.get(`${item.kind}/${item.id}`);if(!id)throw new Error('音频索引不完整。');
     staged.push({kind:item.kind,id});await stores[item.kind](id,item.file);check(signal);
    }
-   for(const track of state.music.tracks)track.id=mapping.get(`music/${track.id}`);
-   for(const list of state.music.playlists)list.trackIds=list.trackIds.map(id=>mapping.get(`music/${id}`));
-   state.music.queue=state.music.queue.map(id=>mapping.get(`music/${id}`));state.music.currentId=state.music.currentId?mapping.get(`music/${state.music.currentId}`):'';
+   const musicId=id=>mapping.get(`music/${id}`)||id;
+   for(const track of state.music.tracks)track.id=musicId(track.id);
+   for(const list of state.music.playlists)list.trackIds=list.trackIds.map(musicId);
+   state.music.queue=state.music.queue.map(musicId);state.music.currentId=musicId(state.music.currentId);
    for(const session of state.sessions)for(const message of session.messages)for(const attachment of message.attachments||[])if(attachment.kind==='voice')attachment.voice.fileId=mapping.get(`voice/${attachment.voice.fileId}`);
   }
   check(signal);onProgress('正在保存记录与设置…');check(signal);storage.setItem(STORAGE_KEY,JSON.stringify(state));return state;
