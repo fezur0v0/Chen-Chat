@@ -321,19 +321,6 @@ export function createTakeawayApp({app,getState,persist,notify}){
   if(target.hasAttribute('data-take-item-note')&&draft)draft.note=target.value;
   if(target.hasAttribute('data-take-order-note'))ui.orderNote=target.value;
  });
- let scrollingArea=null,scrollTimer;
- root.addEventListener('scroll',event=>{
-  const area=event.target;
-  if(!area.matches('.takeaway-scroll,.address-body,.panel'))return;
-  if(scrollingArea!==area)scrollingArea?.classList.remove('is-scrolling');
-  scrollingArea=area;
-  area.classList.add('is-scrolling');
-  clearTimeout(scrollTimer);
-  scrollTimer=setTimeout(()=>{
-   area.classList.remove('is-scrolling');
-   scrollingArea=null;
-  },650);
- },{capture:true,passive:true});
  scroller.addEventListener('scroll',()=>{
   if(ui.route!=='store')return;
   const sections=Array.from(scroller.querySelectorAll('[data-section]'));

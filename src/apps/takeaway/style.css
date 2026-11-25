@@ -20,19 +20,8 @@ color-scheme:dark;
  padding:8px max(16px,env(safe-area-inset-right)) var(--takeaway-scroll-end,16px) max(16px,env(safe-area-inset-left));
  scroll-padding-bottom:var(--takeaway-scroll-end,16px);
 }
-.takeaway-surface :is(.takeaway-scroll,.panel,.address-body){
- --takeaway-thumb:transparent;scrollbar-width:thin;scrollbar-color:var(--takeaway-thumb) transparent;
-}
-.takeaway-surface :is(.takeaway-scroll,.panel,.address-body).is-scrolling{
- --takeaway-thumb:color-mix(in srgb,var(--accent) 66%,var(--muted));
-}
-@supports selector(::-webkit-scrollbar){
- .takeaway-surface :is(.takeaway-scroll,.panel,.address-body){scrollbar-width:auto;scrollbar-color:auto}
- .takeaway-surface :is(.takeaway-scroll,.panel,.address-body)::-webkit-scrollbar{width:4px}
- .takeaway-surface :is(.takeaway-scroll,.panel,.address-body)::-webkit-scrollbar-button{display:none}
- .takeaway-surface :is(.takeaway-scroll,.panel,.address-body)::-webkit-scrollbar-track{background:transparent}
- .takeaway-surface :is(.takeaway-scroll,.panel,.address-body)::-webkit-scrollbar-thumb{background:var(--takeaway-thumb);border-radius:4px}
-}
+.takeaway-surface *{scrollbar-width:none}
+.takeaway-surface *::-webkit-scrollbar{display:none;width:0;height:0}
 .takeaway-surface.no-dock{--takeaway-scroll-end:calc(16px + env(safe-area-inset-bottom))}
 .takeaway-surface.no-dock .dock{display:none}
 .takeaway-surface.in-store{--takeaway-scroll-end:calc(104px + env(safe-area-inset-bottom))}
@@ -86,8 +75,7 @@ color-scheme:dark;
 .takeaway-surface .store-card .food-illustration{width:72px;border-radius:16px}
 .takeaway-surface .store-card h2{margin:0 0 4px;font-size:20px;letter-spacing:-.03em}
 .takeaway-surface .store-card p{margin:6px 0 0;color:var(--muted);font-size:13px}
-.takeaway-surface .reco{display:flex;gap:10px;overflow:auto;margin:0 -16px 12px;padding:0 16px 4px;scrollbar-width:none}
-.takeaway-surface .reco::-webkit-scrollbar{display:none}
+.takeaway-surface .reco{display:flex;gap:10px;overflow:auto;margin:0 -16px 12px;padding:0 16px 4px}
 .takeaway-surface .reco button{flex:none;width:108px;text-align:left}
 .takeaway-surface .reco .food-illustration{width:100%;height:80px;border-radius:14px}
 .takeaway-surface .reco .food-illustration svg{width:44px;height:44px}
@@ -166,7 +154,7 @@ color-scheme:dark;
 .takeaway-surface .feed{margin-top:8px}
 .takeaway-surface .feed div{padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
 .takeaway-surface .feed small{display:block;color:var(--muted)}
-.takeaway-surface .bought{display:flex;gap:8px;overflow:auto;margin:0 -16px 12px;padding:0 16px;scrollbar-width:none}
+.takeaway-surface .bought{display:flex;gap:8px;overflow:auto;margin:0 -16px 12px;padding:0 16px}
 .takeaway-surface .bought button{flex:none;display:flex;align-items:center;gap:8px;min-height:48px;padding:0 12px 0 6px;border-radius:999px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line)}
 .takeaway-surface .bought img{width:36px;height:36px;border-radius:50%;object-fit:cover}
 .takeaway-surface .order{width:100%;text-align:left;padding:14px 0;border-bottom:1px solid var(--line)}
