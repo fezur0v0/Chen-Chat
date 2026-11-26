@@ -11,6 +11,10 @@
     html,body{margin:0;background:#eceef3}html[data-theme=dark],html[data-theme=dark] body{background:#0c0d11}
   </style>
   <script>
+    if (window.Capacitor?.isNativePlatform?.()) {
+      document.documentElement.dataset.nativeApp = '';
+    }
+
     // Restore the existing appearance before first paint; failures use neutral defaults.
     try {
       const saved=JSON.parse(localStorage.getItem('chenxin.frontend.v1'));
