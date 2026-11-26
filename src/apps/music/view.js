@@ -49,10 +49,12 @@ function online(state,ui){
  const lists=(remote.playlists||[]).map(list=>`<button type="button" class="music-online-playlist" data-netease-playlist="${escape(list.id)}" aria-pressed="${remote.playlist?.id===list.id}">${icon('disc')}<span>${escape(list.title)}</span></button>`).join('');
  return `${header('网易云音乐','music-home','netease-search')}<section class="music-song-panel app-panel glass music-online">
  <form data-netease-form>
-  <details ${configured?'':'open'}><summary>网易云服务地址</summary>${field('服务地址','endpoint',state.music.neteaseEndpoint,'https://你的音乐服务地址')}</details>
+  <details ${configured?'':'open'}><summary>网易云服务地址与访问密钥</summary>${field('服务地址','endpoint',state.music.neteaseEndpoint,'https://你的音乐服务地址')}
+   <label class="field"><span>访问密钥</span><input type="password" name="service-key" maxlength="128" autocomplete="off" placeholder="${ui.hasMusicServiceKey?'本次已填写':'服务需要密钥时填写'}"></label>
+  </details>
   <div class="music-search">${icon('search')}<input type="search" name="search" maxlength="100" value="${escape(remote.query||'')}" placeholder="搜歌曲或歌手" aria-label="搜歌曲或歌手"><button type="submit">搜索</button></div>
   ${remote.account?`<div class="music-online-account"><strong>${escape(remote.account.name)}</strong><button type="button" data-music-action="netease-logout">退出登录</button></div>`
-    :'<button class="music-online-login" type="submit" value="login" formnovalidate>扫码登录网易云</button>'}
+    :`<button class="music-online-login" type="submit" value="login" formnovalidate ${remote.loading?'disabled':''}>扫码登录网易云</button>`}
  </form>
  ${remote.qr?`<div class="music-online-qr"><img src="${escape(remote.qr)}" width="164" height="164" alt="网易云登录二维码"><button type="button" data-music-action="netease-cancel">取消扫码</button></div>`:''}
  <p class="music-sheet-hint" role="status">${escape(remote.status||(remote.loading?'正在连接网易云…':!configured?'填入自己部署的网易云服务地址后即可连接。':''))}</p>

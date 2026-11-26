@@ -21,17 +21,21 @@ function secureMedia(value){
 }
 
 async function musicRequest(base,route,params={},options={}){
- const {cookie,signal,qr=false}=options;
+ const {cookie,signal,accessKey,qr=false}=options;
  const endpoint=normalizeMusicEndpoint(base);
  if(!endpoint)throw new Error('请先填写网易云服务地址。');
  const timed=signal?AbortSignal.any([signal,AbortSignal.timeout(12000)]):AbortSignal.timeout(12000);
- const query=cookie?{requestId:crypto.randomUUID()}:qr?{...params,requestId:crypto.randomUUID()}:params;
+ const post=Boolean(cookie||(qr&&accessKey));
+ const query=post?{requestId:crypto.randomUUID()}:qr?{...params,requestId:crypto.randomUUID()}:params;
  const url=`${endpoint}/${route}?${new URLSearchParams(query)}`;
- const request=cookie?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...params,cookie})}:{};
+ const headers=accessKey?{'X-Chen-Music-Key':accessKey}:{};
+ const request=post?{method:'POST',body:JSON.stringify({...params,...(cookie?{cookie}:{})})}:{};
+ if(post)headers['Content-Type']='application/json';
  let response;
  try{
-  response=await fetch(url,{...request,credentials:'omit',redirect:'error',cache:'no-store',signal:timed});
+  response=await fetch(url,{...request,headers,credentials:'omit',redirect:'error',cache:'no-store',signal:timed});
  }catch{throw new Error('无法连接网易云服务，请检查地址和跨域配置。');}
+ if(response.status===401)throw new Error('请检查音乐服务访问密钥。');
  if(!response.ok)throw new Error('网易云服务暂时无法使用，请稍后重试。');
  const data=await response.json().catch(()=>null);
  if(!data||(!qr&&(data.code??data.data?.code)!==200))throw new Error('网易云服务未返回有效结果，请稍后再试。');
@@ -56,52 +60,53 @@ export async function searchNetease(base,query,options){
  return tracks(data.result?.songs);
 }
 
-export async function neteasePlayback(base,id,cookie){
- const data=await musicRequest(base,'song/url/v1',{id,level:'standard'},{cookie});
+export async function neteasePlayback(base,id,cookie,accessKey){
+ const data=await musicRequest(base,'song/url/v1',{id,level:'standard'},{cookie,accessKey});
  const item=Array.isArray(data.data)?data.data.find(song=>String(song?.id)===id):null;
  const url=secureMedia(item?.url);
  if(!url)throw new Error('这首歌当前没有可播放的音源。');
  return {url,preview:Boolean(item.freeTrialInfo)};
 }
 
-export async function neteaseLyrics(base,id){
- const data=await musicRequest(base,'lyric',{id});
+export async function neteaseLyrics(base,id,accessKey){
+ const data=await musicRequest(base,'lyric',{id},{accessKey});
  const text=typeof data.lrc?.lyric==='string'?data.lrc.lyric:'';
  return text.slice(0,18000).split(/\r?\n/).map(line=>line.replace(/^(?:\[[^\]]*\])+/,'').trim()).filter(Boolean).join('\n');
 }
 
-export async function neteaseQr(base,signal){
- const {data}=await musicRequest(base,'login/qr/key',{}, {qr:true,signal});
+export async function neteaseQr(base,signal,accessKey){
+ const {data}=await musicRequest(base,'login/qr/key',{}, {qr:true,signal,accessKey});
  const key=data?.unikey;
  if(typeof key!=='string'||!key||key.length>256)throw new Error('生成网易云登录二维码失败。');
- const result=await musicRequest(base,'login/qr/create',{key,qrimg:'true'}, {qr:true,signal});
+ const result=await musicRequest(base,'login/qr/create',{key,qrimg:'true'}, {qr:true,signal,accessKey});
  const image=result.data?.qrimg;
  if(typeof image!=='string'||image.length>200000||!/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(image))throw new Error('网易云未返回可用的二维码。');
  return {key,image};
 }
 
-export async function neteaseCheckQr(base,key,signal){
- const result=await musicRequest(base,'login/qr/check',{key}, {qr:true,signal});
+export async function neteaseCheckQr(base,key,signal,accessKey){
+ const result=await musicRequest(base,'login/qr/check',{key}, {qr:true,signal,accessKey});
  const cookie=typeof result.cookie==='string'?/(?:^|;\s*)(MUSIC_U=[^;\r\n]{1,4096})(?:;|$)/.exec(result.cookie)?.[1]:'';
+ if(![800,801,802,803].includes(result.code))throw new Error('没有读取到有效的扫码状态，请重新生成二维码。');
  if(result.code===803&&!cookie)throw new Error('登录确认后未收到网易云会话，请重试。');
  return {code:result.code,cookie};
 }
 
-export async function neteaseAccount(base,cookie,signal){
- const {data}=await musicRequest(base,'login/status',{}, {cookie,signal});
+export async function neteaseAccount(base,cookie,signal,accessKey){
+ const {data}=await musicRequest(base,'login/status',{}, {cookie,signal,accessKey});
  const id=neteaseId(data?.profile?.userId);
  if(!id)throw new Error('没有读取到网易云账号，请重新扫码。');
  return {id,name:String(data.profile.nickname||'我的网易云').slice(0,120)};
 }
 
-export async function neteasePlaylists(base,account,cookie,offset,signal){
- const data=await musicRequest(base,'user/playlist',{uid:account.id,limit:50,offset},{cookie,signal});
+export async function neteasePlaylists(base,account,cookie,offset,signal,accessKey){
+ const data=await musicRequest(base,'user/playlist',{uid:account.id,limit:50,offset},{cookie,signal,accessKey});
  const items=(Array.isArray(data.playlist)?data.playlist:[]).slice(0,50);
  return {items:items.filter(item=>neteaseId(item?.id)&&typeof item.name==='string').map(item=>({id:String(item.id),title:item.name.slice(0,120)})),more:data.more===true,offset:offset+items.length};
 }
 
-export async function neteasePlaylistTracks(base,id,cookie,offset,signal){
- const data=await musicRequest(base,'playlist/track/all',{id,limit:50,offset},{cookie,signal});
+export async function neteasePlaylistTracks(base,id,cookie,offset,signal,accessKey){
+ const data=await musicRequest(base,'playlist/track/all',{id,limit:50,offset},{cookie,signal,accessKey});
  const items=Array.isArray(data.songs)?data.songs:[];
  return {songs:tracks(items),more:items.length>=50,offset:offset+items.length};
 }

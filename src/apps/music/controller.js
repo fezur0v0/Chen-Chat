@@ -8,7 +8,8 @@ import {createNeteaseAccount} from './netease-account.js';
 export function createMusicApp({app,getState,setState,persist,notify,compressImage}) {
  const ui={screen:'home',playlistId:'builtin:all',returnScreen:'home',search:'',playing:false,time:0,duration:0,loading:false,missing:false,busy:false,seeking:false,together:{distanceKm:null,elapsedSeconds:null}};
  const audio=new Audio();audio.preload='metadata';
- const netease=createNeteaseAccount({endpoint:()=>data().neteaseEndpoint,refresh:()=>{if(ui.screen==='online')refresh();}});
+ let serviceKey='';
+ const netease=createNeteaseAccount({endpoint:()=>data().neteaseEndpoint,getAccessKey:()=>serviceKey,refresh:()=>{if(ui.screen==='online')refresh();}});
  const online=netease.ui;ui.online=online;ui.lyrics='';ui.preview=false;
  const dialog=document.createElement('dialog');dialog.className='music-sheet glass bottom-sheet';document.body.append(dialog);
  const picker=document.createElement('input');picker.type='file';picker.multiple=true;picker.accept='audio/*,.mp3,.m4a,.aac,.wav,.ogg,.flac,.opus';picker.hidden=true;picker.dataset.musicFiles='';document.body.append(picker);
@@ -79,9 +80,9 @@ export function createMusicApp({app,getState,setState,persist,notify,compressIma
   try {
    if(track.neteaseId){
     const base=data().neteaseEndpoint;
-    const stream=await neteasePlayback(base,track.neteaseId,netease.cookie());if(ticket!==generation)return;
+    const stream=await neteasePlayback(base,track.neteaseId,netease.cookie(),serviceKey);if(ticket!==generation)return;
     ui.preview=stream.preview;audio.src=stream.url;
-    void neteaseLyrics(base,track.neteaseId).then(lyrics=>{
+    void neteaseLyrics(base,track.neteaseId,serviceKey).then(lyrics=>{
      if(ticket===generation){ui.lyrics=lyrics;refresh();}
     }).catch(()=>{});
    }else{
@@ -190,10 +191,14 @@ export function createMusicApp({app,getState,setState,persist,notify,compressIma
   const fields=new FormData(form),base=String(fields.get('endpoint')||'').trim();
   const endpoint=normalizeMusicEndpoint(base);
   if(!endpoint){notify('请填写 HTTPS 服务地址。本机调试可使用 localhost。');return;}
+  const key=String(fields.get('service-key')||'').trim();
+  if(key&&!/^[A-Za-z0-9_-]{32,128}$/.test(key)){notify('音乐服务访问密钥格式不正确。');return;}
   if(data().neteaseEndpoint!==endpoint){
    if(!commit(state=>{state.music.neteaseEndpoint=endpoint;}))return;
-   netease.reset();
+   serviceKey='';netease.reset();
   }
+  if(key&&key!==serviceKey){serviceKey=key;netease.reset();}
+  ui.hasMusicServiceKey=Boolean(serviceKey);
   if(event.submitter?.value==='login')void netease.login();
   else void netease.search(String(fields.get('search')||'').trim().slice(0,100));
  });
@@ -250,5 +255,5 @@ export function createMusicApp({app,getState,setState,persist,notify,compressIma
   const track=data().tracks.find(t=>t.id===loadedId);if(track&&Number.isFinite(audio.duration)&&Math.abs(track.duration-audio.duration)>.1)commit(()=>{track.duration=audio.duration;});
  });
  audio.addEventListener('ended',()=>{syncPlayback();const id=nextMusicId(data(),1,true);if(id)void playTrack(id,data().queue);});
- return {ui,reset(){stop();netease.reset();ui.screen='home';ui.playlistId='builtin:all';ui.search='';if(dialog.open)dialog.close();}};
+ return {ui,reset(){stop();serviceKey='';ui.hasMusicServiceKey=false;netease.reset();ui.screen='home';ui.playlistId='builtin:all';ui.search='';if(dialog.open)dialog.close();}};
 }
