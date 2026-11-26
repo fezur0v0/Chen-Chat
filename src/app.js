@@ -66,6 +66,13 @@ function renderGeneration(id){
  if(!nearBottom&&app.querySelector('#messages'))app.querySelector('#messages').scrollTop=top;
  if(focused)app.querySelector('[name=message]')?.focus({preventScroll:true});
 }
+function animatePageEntry(target){
+ if(!target||!matchMedia('(prefers-reduced-motion: no-preference)').matches)return;
+ target.getAnimations().find(animation=>animation.id==='page-entry')?.cancel();
+ // A relative offset keeps the wallpaper and backdrop-filter sampling in place.
+ const animation=target.animate([{top:'4px'},{top:'0px'}],{duration:180,easing:'cubic-bezier(.2,.75,.25,1)'});
+ animation.id='page-entry';
+}
 function render(){
  generation.reconcile();chatUI.generation=generation.view(state.active);
  for(const node of app.querySelectorAll('details')){if(node.open)opened.add(node.id);else opened.delete(node.id);}
@@ -95,7 +102,9 @@ function renderHome(){
  const focusedDot=document.activeElement?.closest('.home-page-dots button')?.dataset.page;
  const template=document.createElement('template');template.innerHTML=home(state,homeEditor.ui);
  const next=template.content.firstElementChild,currentPage=desktop.querySelector('.home-desktop-page'),nextPage=next.querySelector('.home-desktop-page');
+ const changedPage=currentPage.dataset.homePage!==nextPage.dataset.homePage;
  currentPage.replaceChildren(...nextPage.childNodes);
+ if(changedPage)animatePageEntry(currentPage);
  currentPage.dataset.homePage=nextPage.dataset.homePage;
  currentPage.setAttribute('aria-label',nextPage.getAttribute('aria-label'));
  const dots=desktop.querySelector('.home-page-dots');dots.replaceChildren(...next.querySelector('.home-page-dots').childNodes);
@@ -108,7 +117,28 @@ function renderHome(){
  }
  if(focusedDot!==undefined)dots.querySelector(`[data-page="${focusedDot}"]`)?.focus({preventScroll:true});
 }
-function goto(next){if(next==='app-memory')next='memory';if(next==='chat'&&composerSession!==state.active){composeDraft='';chatUI.attachments=[];chatUI.replyTo=null;}composerSession=state.active;homeEditor.exit();if(next==='app-diary'&&page!=='app-diary')diaryApp.openHome();if(next==='app-gallery')galleryApp.openHome();if(next==='app-ledger'&&page!=='app-ledger')ledgerApp.openHome();if(next==='app-phone'&&page!==next)phoneApp.openHome();if(next==='app-shopping'&&page!==next)shoppingApp.openHome();if(next==='app-takeaway'&&page!=='app-takeaway')takeawayApp.openHome();if(sidebarDialog.open)sidebarDialog.close();chatUI.tray='';page=next;render();app.querySelector('.page-content')?.scrollTo(0,0);if(findApp(next)||['memory','settings'].includes(next))app.querySelector('.desktop-app-header h1,.music-header h1,.moom-header h1')?.focus({preventScroll:true});}
+function goto(next){
+ if(next==='app-memory')next='memory';
+ if(next==='chat'&&composerSession!==state.active){composeDraft='';chatUI.attachments=[];chatUI.replyTo=null;}
+ composerSession=state.active;
+ homeEditor.exit();
+ if(next==='app-diary'&&page!=='app-diary')diaryApp.openHome();
+ if(next==='app-gallery')galleryApp.openHome();
+ if(next==='app-ledger'&&page!=='app-ledger')ledgerApp.openHome();
+ if(next==='app-phone'&&page!==next)phoneApp.openHome();
+ if(next==='app-shopping'&&page!==next)shoppingApp.openHome();
+ if(next==='app-takeaway'&&page!=='app-takeaway')takeawayApp.openHome();
+ if(sidebarDialog.open)sidebarDialog.close();
+ chatUI.tray='';
+ const changedPage=page!==next;
+ page=next;
+ render();
+ app.querySelector('.page-content')?.scrollTo(0,0);
+ if(changedPage)animatePageEntry(app.querySelector('.shell > main'));
+ if(findApp(next)||['memory','settings'].includes(next)){
+  app.querySelector('.desktop-app-header h1,.music-header h1,.moom-header h1')?.focus({preventScroll:true});
+ }
+}
 function focusSettings(id){if(id==='appearance-settings'){goto('app-appearance');return;}goto('settings');const d=document.getElementById(id);if(d){d.open=true;opened.add(id);d.scrollIntoView({behavior:'smooth',block:'start'});}}
 function showMemoryEditor(item,source=''){dialog.innerHTML=memoryEditor(item,source);dialog.showModal();dialog.querySelector('[name=title]').focus();}
 function closeModal(){dialog.close();}
