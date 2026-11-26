@@ -24,7 +24,7 @@ dialog:is(.music-sheet,.app-sheet).bottom-sheet[open]:has(>.drawer-scroll,>.draw
 }
 .bottom-sheet>.drawer-layout{display:flex;flex-direction:column;min-height:0}
 .bottom-sheet>.drawer-heading,.drawer-layout>.drawer-heading{flex-shrink:0}
-.drawer-scroll{min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;scroll-padding-block:6px;padding-inline:2px}
+.drawer-scroll{min-height:0;overflow:auto;overscroll-behavior:contain;scroll-padding-block:6px;padding-inline:2px}
 
 /* Extend the scrollport to the edge while keeping content inside the safe area. */
 .bottom-sheet :is(.drawer-scroll,.moom-form-body){
@@ -32,22 +32,4 @@ dialog:is(.music-sheet,.app-sheet).bottom-sheet[open]:has(>.drawer-scroll,>.draw
  overflow-x:hidden;
  margin-right:calc(0px - var(--drawer-scroll-inset));
  padding-right:calc(2px + var(--drawer-scroll-inset));
-}
-.bottom-sheet,
-.bottom-sheet :is(.drawer-scroll,.moom-form-body){--drawer-scroll-thumb:transparent}
-.bottom-sheet.is-scrolling,
-.bottom-sheet .is-scrolling{--drawer-scroll-thumb:rgb(var(--tint) / .58)}
-@supports selector(::-webkit-scrollbar){
- .bottom-sheet:is(.chat-tray,.app-sheet,.music-sheet),
- .bottom-sheet :is(.drawer-scroll,.moom-form-body){scrollbar-width:auto}
- .bottom-sheet::-webkit-scrollbar,
- .bottom-sheet :is(.drawer-scroll,.moom-form-body)::-webkit-scrollbar{width:3px}
- .bottom-sheet::-webkit-scrollbar-thumb,
- .bottom-sheet :is(.drawer-scroll,.moom-form-body)::-webkit-scrollbar-thumb{
-  background:var(--drawer-scroll-thumb);border-radius:3px;
- }
-}
-@supports not selector(::-webkit-scrollbar){
- .bottom-sheet,
- .bottom-sheet :is(.drawer-scroll,.moom-form-body){scrollbar-width:thin;scrollbar-color:var(--drawer-scroll-thumb) transparent}
 }

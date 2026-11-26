@@ -55,7 +55,7 @@
 .diary-note-toolbar>button[aria-expanded=true]{color:var(--accent)}
 .diary-note-toolbar svg,.diary-inline-formats svg{width:21px;height:21px}
 .diary-note-meta{margin-bottom:20px}.diary-tool-divider{display:none}
-.diary-format-panel{flex:0 0 auto;max-height:min(320px,45dvh);overflow:auto;padding:0 16px calc(16px + env(safe-area-inset-bottom));scrollbar-width:thin;background:transparent}
+.diary-format-panel{flex:0 0 auto;max-height:min(320px,45dvh);overflow:auto;padding:0 16px calc(16px + env(safe-area-inset-bottom));background:transparent}
 .diary-format-panel[hidden]{display:none}.diary-format-heading{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--muted)}
 .diary-format-heading button{display:grid;place-items:center;min-width:44px;min-height:44px;background:none;border:0;color:var(--ink)}.diary-format-heading svg{width:18px;height:18px}
 .diary-inline-formats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;padding:4px;background:color-mix(in srgb,var(--diary-tone) 5%,transparent);border-radius:14px}
