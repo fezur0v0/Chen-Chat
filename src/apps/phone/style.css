@@ -18,8 +18,6 @@
 .phone-wallpaper-button{display:grid;place-items:center;width:44px;height:44px;border:0;background:none;border-radius:14px}
 .phone-wallpaper-button svg{width:20px;height:20px}
 .phone-scroll{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:12px max(16px,env(safe-area-inset-right)) 18px max(16px,env(safe-area-inset-left))}
-.phone-scroll,.phone-scroll *{scrollbar-width:none}
-.phone-scroll::-webkit-scrollbar,.phone-scroll *::-webkit-scrollbar{display:none}
 .phone-surface[data-screen=home]{background:#000;color:#f9f8f6}
 .phone-surface[data-screen=home][data-wallpaper=evening]{
  background:#000 url('../../../assets/phone/evening.svg') center/cover no-repeat;

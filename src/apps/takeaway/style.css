@@ -20,8 +20,6 @@ color-scheme:dark;
  padding:8px max(16px,env(safe-area-inset-right)) var(--takeaway-scroll-end,16px) max(16px,env(safe-area-inset-left));
  scroll-padding-bottom:var(--takeaway-scroll-end,16px);
 }
-.takeaway-surface *{scrollbar-width:none}
-.takeaway-surface *::-webkit-scrollbar{display:none;width:0;height:0}
 .takeaway-surface.no-dock{--takeaway-scroll-end:calc(16px + env(safe-area-inset-bottom))}
 .takeaway-surface.no-dock .dock{display:none}
 .takeaway-surface.in-store{--takeaway-scroll-end:calc(104px + env(safe-area-inset-bottom))}
